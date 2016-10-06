@@ -21,7 +21,7 @@ CBanriganViewerDlg::CBanriganViewerDlg(CWnd* pParent /*=NULL*/)
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	
 	m_pImgBuf = NULL;
-	m_pPocBuf = NULL;
+	m_pRegBuf = NULL;
 	m_pImgBmpInfo = NULL;
 	m_pPocBmpInfo = NULL;
 }
@@ -43,10 +43,14 @@ BEGIN_MESSAGE_MAP(CBanriganViewerDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_MONITOR, &CBanriganViewerDlg::OnBnClickedBtnMonitor)
 	ON_CONTROL_RANGE(BN_CLICKED, IDC_RBTN_MONITOR1, IDC_RBTN_MONITOR3, OnBnClickedRBtnMonitor)
 	ON_BN_CLICKED(IDC_BTN_MEASURE, &CBanriganViewerDlg::OnBnClickedBtnMeasure)
-	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_POCX, &CBanriganViewerDlg::OnDeltaposSpinPocx)
-	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_POCY, &CBanriganViewerDlg::OnDeltaposSpinPocy)
-	ON_BN_CLICKED(IDC_CHKBTN_SETPOC, &CBanriganViewerDlg::OnBnClickedChkbtnSetpoc)
-	ON_BN_CLICKED(IDC_BTN_SET_REGISTER, &CBanriganViewerDlg::OnBnClickedBtnSetRegister)
+	ON_BN_CLICKED(IDC_CHK_SETREG, &CBanriganViewerDlg::OnBnClickedChkbtnSetpoc)
+	ON_BN_CLICKED(IDC_BTN_WRITEREGISTER, &CBanriganViewerDlg::OnBnClickedBtnWriteRegister)
+	ON_BN_CLICKED(IDC_BTN_GETREGIMG, &CBanriganViewerDlg::OnBnClickedBtnGetregimg)
+	ON_EN_UPDATE(IDC_EDIT_REGORGX, &CBanriganViewerDlg::OnUpdateRegister)
+	ON_EN_UPDATE(IDC_EDIT_REGORGY, &CBanriganViewerDlg::OnUpdateRegister)
+	ON_EN_UPDATE(IDC_EDIT_REGSIZE, &CBanriganViewerDlg::OnUpdateRegister)
+	ON_EN_UPDATE(IDC_EDIT_REFPOSX, &CBanriganViewerDlg::OnUpdateRegister)
+	ON_EN_UPDATE(IDC_EDIT_REFPOSY, &CBanriganViewerDlg::OnUpdateRegister)
 END_MESSAGE_MAP()
 
 
@@ -64,30 +68,29 @@ BOOL CBanriganViewerDlg::OnInitDialog()
 	InitControls();
 
 	CreateImgBmpInfo(CAMERA_WIDTH,CAMERA_HEIGHT);
-	CreatePocBmpInfo(POC_WIDTH,POC_HEIGHT);
+	CreatePocBmpInfo(REG_WIDTH,REG_HEIGHT);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
 void CBanriganViewerDlg::InitControls()
 {
-	// ----- IP & Port ----- //
+	// ----- IP Address Control ----- //
 	CIPAddressCtrl *pIP = (CIPAddressCtrl*)GetDlgItem(IDC_IP_BANRIGAN);
 	pIP->SetAddress(192,168,0,1);
 	SetDlgItemInt(IDC_EDIT_PORT, 10000);
-
-	// ----- Get Image ----- //
-	CComboBox* pCB = (CComboBox*)GetDlgItem(IDC_CB_IMAGE);
-	pCB->SetCurSel(0);
 
 	// ----- Image Buffer ----- //
 	m_pImgBuf = new BYTE[CAMERA_WIDTH * CAMERA_HEIGHT];
 	memset(m_pImgBuf, 0, CAMERA_WIDTH * CAMERA_HEIGHT);
 
-	m_pPocBuf = new BYTE[POC_WIDTH * POC_HEIGHT];
-	memset(m_pPocBuf, 0, POC_WIDTH * POC_HEIGHT);
+	m_pRegBuf = new BYTE[REG_WIDTH * REG_HEIGHT];
+	memset(m_pRegBuf, 0, REG_WIDTH * REG_HEIGHT);
 
-	// ----- Mode & Display ----- //
+	// ----- ComboBox Control ----- //
+	CComboBox* pCB = (CComboBox*)GetDlgItem(IDC_CB_IMAGE);
+	pCB->SetCurSel(0);
+
 	pCB = (CComboBox*)GetDlgItem(IDC_CB_RUNMODE);
 	pCB->SetCurSel(0);
 
@@ -103,27 +106,61 @@ void CBanriganViewerDlg::InitControls()
 	pCB = (CComboBox*)GetDlgItem(IDC_CB_DISPLAY4);
 	pCB->SetCurSel(0);
 
-	// ----- Measure Image ----- //
 	pCB = (CComboBox*)GetDlgItem(IDC_CB_MEASURE);
 	pCB->SetCurSel(0);
 
-	// ----- POC X,Y Edit & Spin Control ----- //
+	// ----- Edit & Spin Control ----- //
 	UDACCEL accels[] = {{-1,1}};
-	CSpinButtonCtrl* pSP = (CSpinButtonCtrl*)GetDlgItem(IDC_SPIN_POCX);
-	pSP->SetRange(-640,636);
+	CSpinButtonCtrl* pSP = (CSpinButtonCtrl*)GetDlgItem(IDC_SPIN_REGORGX);
+	pSP->SetRange(-320,320);
 	pSP->SetAccel(1,accels);
-	SetDlgItemInt(IDC_EDIT_POCX,640/2-64);
+	SetDlgItemInt(IDC_EDIT_REGORGX,-240);
 
-	pSP = (CSpinButtonCtrl*)GetDlgItem(IDC_SPIN_POCY);
-	pSP->SetRange(-511,512);
+	pSP = (CSpinButtonCtrl*)GetDlgItem(IDC_SPIN_REGORGY);
+	pSP->SetRange(-240,240);
 	pSP->SetAccel(1,accels);
-	SetDlgItemInt(IDC_EDIT_POCY,480/2-64);
+	SetDlgItemInt(IDC_EDIT_REGORGY,240);
+
+	pSP = (CSpinButtonCtrl*)GetDlgItem(IDC_SPIN_REFPOSX);
+	pSP->SetRange(-320,320);
+	pSP->SetAccel(1,accels);
+	SetDlgItemInt(IDC_EDIT_REFPOSX,0);
+
+	pSP = (CSpinButtonCtrl*)GetDlgItem(IDC_SPIN_REFPOSY);
+	pSP->SetRange(-240,240);
+	pSP->SetAccel(1,accels);
+	SetDlgItemInt(IDC_EDIT_REFPOSY,0);
+
+	pSP = (CSpinButtonCtrl*)GetDlgItem(IDC_SPIN_GROUP);
+	pSP->SetRange(1,16);
+	pSP->SetAccel(1,accels);
+	SetDlgItemInt(IDC_EDIT_GROUP,1);
+
+	pSP = (CSpinButtonCtrl*)GetDlgItem(IDC_SPIN_FLOW);
+	pSP->SetRange(1,64);
+	pSP->SetAccel(1,accels);
+	SetDlgItemInt(IDC_EDIT_FLOW,1);
+
+	pSP = (CSpinButtonCtrl*)GetDlgItem(IDC_SPIN_REGNUM);
+	pSP->SetRange(1,400);
+	pSP->SetAccel(1,accels);
+	SetDlgItemInt(IDC_EDIT_REGNUM, 1);
+
+	UDACCEL accSize[] = {{-4,4}};
+	pSP = (CSpinButtonCtrl*)GetDlgItem(IDC_SPIN_REGSIZE);
+	pSP->SetRange(4,480);
+	pSP->SetAccel(4,accSize);
+	SetDlgItemInt(IDC_EDIT_REGSIZE,480);
 
 	// ----- Picture Control ----- //
 	CRect rect;
 	GetDlgItem(IDC_PC_CAMERA)->GetWindowRect(&rect);
 	ScreenToClient(&rect);
-	GetDlgItem(IDC_PC_CAMERA)->MoveWindow(rect.left,rect.top,640,480);
+	GetDlgItem(IDC_PC_CAMERA)->MoveWindow(rect.left,rect.top,CAMERA_WIDTH,CAMERA_HEIGHT);
+
+	GetDlgItem(IDC_PC_POC)->GetWindowRect(&rect);
+	ScreenToClient(&rect);
+	GetDlgItem(IDC_PC_POC)->MoveWindow(rect.left,rect.top,REG_WIDTH,REG_HEIGHT);
 }
 
 void CBanriganViewerDlg::OnDestroy()
@@ -141,10 +178,10 @@ void CBanriganViewerDlg::OnDestroy()
 		m_pImgBuf = NULL;
 	}
 
-	if (m_pPocBuf != NULL)
+	if (m_pRegBuf != NULL)
 	{
-		delete []m_pPocBuf;
-		m_pPocBuf = NULL;
+		delete []m_pRegBuf;
+		m_pRegBuf = NULL;
 	}
 
 	if (m_pImgBmpInfo != NULL)
@@ -237,36 +274,24 @@ void CBanriganViewerDlg::OnBnClickedBtnGetimage()
 {
 	bool ret = false;
 
-	if (m_Banrigan.IsOpened() == false) return;
+	if (m_Banrigan.IsOpened() == false) 
+	{
+		AfxMessageBox(L"반리간이 연결되어 있지 않습니다.");
+		return;
+	}
 
 	CComboBox* pCB = (CComboBox*)GetDlgItem(IDC_CB_IMAGE);
 	int sel = pCB->GetCurSel();
 
-	if (sel == 8) // 8 : POC2
+	ret = m_Banrigan.GetImage(sel, m_pImgBuf);
+	if (ret == false)
 	{
-		long pocX=0,pocY=0;
-		float refX=0,refY=0;
-		ret = m_Banrigan.GetRegisterData(2,pocX,pocY,refX,refY,m_pPocBuf);
-		if (ret == false)
-		{
-			AfxMessageBox(m_Banrigan.GetLastErrorMsg());
-			return;
-		}
-
-		CDraw::DrawImage(GetDlgItem(IDC_PC_POC),m_pPocBuf,m_pPocBmpInfo,POC_WIDTH,POC_HEIGHT,false);
+		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
+		return;
 	}
-	else
-	{
-		ret = m_Banrigan.GetImage(sel, m_pImgBuf);
-		if (ret == false)
-		{
-			AfxMessageBox(m_Banrigan.GetLastErrorMsg());
-			return;
-		}
 
-		int state = IsDlgButtonChecked(IDC_CHKBTN_CROSSLINE);
-		CDraw::DrawImage(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,CAMERA_WIDTH,CAMERA_HEIGHT,state);
-	}
+	int state = IsDlgButtonChecked(IDC_CHK_CROSSLINE);
+	CDraw::DrawImage(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,CAMERA_WIDTH,CAMERA_HEIGHT,state);
 }
 // Create Image Bitmap Info 
 void CBanriganViewerDlg::CreateImgBmpInfo(int nWidth, int nHeight)
@@ -337,7 +362,7 @@ void CBanriganViewerDlg::OnBnClickedBtnLive()
 {
 	if (m_Banrigan.IsOpened() == false)
 	{
-		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
+		AfxMessageBox(L"반리간이 연결되어 있지 않습니다.");
 		return;
 	}
 
@@ -375,7 +400,7 @@ void CBanriganViewerDlg::OnTimer(UINT_PTR nIDEvent)
 			SetDlgItemText(IDC_BTN_LIVE, L"Live Start");
 		}
 
-		int state = IsDlgButtonChecked(IDC_CHKBTN_CROSSLINE);
+		int state = IsDlgButtonChecked(IDC_CHK_CROSSLINE);
 		CDraw::DrawImage(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,CAMERA_WIDTH,CAMERA_HEIGHT,state);
 	}
 
@@ -389,7 +414,7 @@ void CBanriganViewerDlg::OnBnClickedBtnMonitor()
 
 	if (m_Banrigan.IsOpened() == false)
 	{
-		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
+		AfxMessageBox(L"반리간이 연결되어 있지 않습니다.");
 		return;
 	}
 
@@ -460,59 +485,61 @@ BOOL CBanriganViewerDlg::PreTranslateMessage(MSG* pMsg)
 		
 	return CDialogEx::PreTranslateMessage(pMsg);
 }
-// Spin Control
-void CBanriganViewerDlg::OnDeltaposSpinPocx(NMHDR *pNMHDR, LRESULT *pResult)
-{
-	LPNMUPDOWN pNMUpDown = reinterpret_cast<LPNMUPDOWN>(pNMHDR);
-	
-	UpdateData();
-
-	int pocX = GetDlgItemInt(IDC_EDIT_POCX);
-	int pocY = GetDlgItemInt(IDC_EDIT_POCY);
-	CDraw::DrawImageWithROI(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,640,480,pocX, pocY);
-	*pResult = 0;
-}
-// Spin Control
-void CBanriganViewerDlg::OnDeltaposSpinPocy(NMHDR *pNMHDR, LRESULT *pResult)
-{
-	LPNMUPDOWN pNMUpDown = reinterpret_cast<LPNMUPDOWN>(pNMHDR);
-	
-	UpdateData();
-
-	int pocX = GetDlgItemInt(IDC_EDIT_POCX);
-	int pocY = GetDlgItemInt(IDC_EDIT_POCY);
-	CDraw::DrawImageWithROI(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,640,480,pocX, pocY);
-
-	*pResult = 0;
-}
 
 void CBanriganViewerDlg::OnBnClickedChkbtnSetpoc()
 {
-	int state = IsDlgButtonChecked(IDC_CHKBTN_SETPOC);
+	if (m_Banrigan.IsOpened() == false)
+	{
+		AfxMessageBox(L"반리간이 연결되어 있지 않습니다.");
+		return;
+	}
 
-	GetDlgItem(IDC_EDIT_POCX)->EnableWindow(state);
-	GetDlgItem(IDC_SPIN_POCX)->EnableWindow(state);
-	GetDlgItem(IDC_EDIT_POCY)->EnableWindow(state);
-	GetDlgItem(IDC_SPIN_POCY)->EnableWindow(state);
+	int state = IsDlgButtonChecked(IDC_CHK_SETREG);
+
+	GetDlgItem(IDC_EDIT_REGORGX)->EnableWindow(state);
+	GetDlgItem(IDC_SPIN_REGORGX)->EnableWindow(state);
+	GetDlgItem(IDC_EDIT_REGORGY)->EnableWindow(state);
+	GetDlgItem(IDC_SPIN_REGORGY)->EnableWindow(state);
+	GetDlgItem(IDC_EDIT_REGSIZE)->EnableWindow(state);
+	GetDlgItem(IDC_SPIN_REGSIZE)->EnableWindow(state);
+
+	GetDlgItem(IDC_EDIT_REFPOSX)->EnableWindow(state);
+	GetDlgItem(IDC_SPIN_REFPOSX)->EnableWindow(state);
+	GetDlgItem(IDC_EDIT_REFPOSY)->EnableWindow(state);
+	GetDlgItem(IDC_SPIN_REFPOSY)->EnableWindow(state);
+
+	GetDlgItem(IDC_BTN_WRITEREGISTER)->EnableWindow(state);
+	OnUpdateRegister();
 }
 
 void CBanriganViewerDlg::OnBnClickedBtnMeasure()
 {
 	if (m_Banrigan.IsOpened() == false)
 	{
-		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
+		AfxMessageBox(L"반리간이 연결되어 있지 않습니다.");
 		return;
 	}
 
-	float result[20] = {0,};
-	if (m_Banrigan.OnExecute(1,1,result,20) == false)
+	SetDlgItemText(IDC_LB_POSX1,L"");
+	SetDlgItemText(IDC_LB_POSY1,L"");
+	SetDlgItemText(IDC_LB_THETA1,L"");
+	SetDlgItemText(IDC_LB_SCORE1,L"");
+	SetDlgItemText(IDC_LB_TIME1,L"");
+	SetDlgItemText(IDC_LB_POSX2,L"");
+	SetDlgItemText(IDC_LB_POSY2,L"");
+	SetDlgItemText(IDC_LB_THETA2,L"");
+	SetDlgItemText(IDC_LB_SCORE2,L"");
+	SetDlgItemText(IDC_LB_TIME2,L"");
+
+	// 최대 64개의 데이터를 취득한다고 가정.
+	float result[64] = {0,};
+	int resultSize=0;
+	int group = GetDlgItemInt(IDC_EDIT_GROUP);
+	int flow  = GetDlgItemInt(IDC_EDIT_FLOW);
+
+	if (m_Banrigan.OnExecute(group,flow,result,resultSize) == false)
 	{
 		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
-		SetDlgItemText(IDC_LB_POSX,L"");
-		SetDlgItemText(IDC_LB_POSY,L"");
-		SetDlgItemText(IDC_LB_THETA,L"");
-		SetDlgItemText(IDC_LB_SCORE,L"");
-
 		return;
 	}
 
@@ -527,95 +554,114 @@ void CBanriganViewerDlg::OnBnClickedBtnMeasure()
 		return;
 	}
 
-	int state = IsDlgButtonChecked(IDC_CHKBTN_CROSSLINE);
-	CDraw::DrawMeasureImage(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,CAMERA_WIDTH,CAMERA_HEIGHT,result[16],result[17],state);
+	bool ret=false;
+	int state = IsDlgButtonChecked(IDC_CHK_CROSSLINE);
+
+	//POC2단계 사용 시 출력되는 데이터가 10개이므로 resultSize가 5보다 크다는 것은 POC2단계라고 판단.
+	if (resultSize > 5)
+		CDraw::DrawMeasureImage(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,CAMERA_WIDTH,CAMERA_HEIGHT,result[21],result[22],state); // POC 2단계 결과의 중심 좌표.
+	else
+		CDraw::DrawMeasureImage(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,CAMERA_WIDTH,CAMERA_HEIGHT,result[16],result[17],state); // POC 1단계 결과의 중심 좌표.
 
 	CString value=L"";
-	value.Format(L"%.2f", result[16]);
-	SetDlgItemText(IDC_LB_POSX,value);
-	value.Format(L"%.2f", result[17]);
-	SetDlgItemText(IDC_LB_POSY,value);
-	value.Format(L"%.0f", result[18]);
-	SetDlgItemText(IDC_LB_THETA,value);
-	value.Format(L"%.2f", result[19]);
-	SetDlgItemText(IDC_LB_SCORE,value);
+	
+	value.Format(L"%.3f", result[16]);
+	SetDlgItemText(IDC_LB_POSX1,value);
+	value.Format(L"%.3f", result[17]);
+	SetDlgItemText(IDC_LB_POSY1,value);
+	value.Format(L"%.3f", result[18]);
+	SetDlgItemText(IDC_LB_THETA1,value);
+	value.Format(L"%.0f", result[19]);
+	SetDlgItemText(IDC_LB_SCORE1,value);
+	value.Format(L"%.0f", result[20]);
+	SetDlgItemText(IDC_LB_TIME1,value);
+
+	if (resultSize > 5)
+	{
+		value.Format(L"%.3f", result[21]);
+		SetDlgItemText(IDC_LB_POSX2,value);
+		value.Format(L"%.3f", result[22]);
+		SetDlgItemText(IDC_LB_POSY2,value);
+		value.Format(L"%.3f", result[23]);
+		SetDlgItemText(IDC_LB_THETA2,value);
+		value.Format(L"%.0f", result[24]);
+		SetDlgItemText(IDC_LB_SCORE2,value);
+		value.Format(L"%.0f", result[25]);
+		SetDlgItemText(IDC_LB_TIME2,value);
+	}
 }
 
-// POC 2->1 등록 과정.
-// POC 2->1 은 Register 1 -> Register 2 순서로 POC를 실행한다.
-void CBanriganViewerDlg::OnBnClickedBtnSetRegister()
+void CBanriganViewerDlg::OnBnClickedBtnWriteRegister()
 {
 	bool ret = false;
 	if (m_Banrigan.IsOpened() == false)
 	{
-		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
+		AfxMessageBox(L"반리간이 연결되어 있지 않습니다.");
 		return;
 	}
 
-	// ---------- Register 1 삭제 & 등록 & 작성 ---------- //
-	// 1. 기존에 등록되어있던 Register 1을 삭제한다.
-	if (m_Banrigan.OnDeleteRegisterData(1) == false)
+	int regNum = GetDlgItemInt(IDC_EDIT_REGNUM);
+	// 레지스터 데이터를 수정하는 경우, 기존 데이터는 반드시 지우고 새로 생성하여 작성해야 함.
+	if (m_Banrigan.OnDeleteRegisterData(regNum) == false)
 	{
 		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
 		return;
 	}
 
-	// 2. Register 1번을 새로 추가한다. (POC 2->1 에서 '2'에 해당.)
-	//    Camera 1번 이미지를 선택하고, 화면 중심 기준으로 offset (-240,240) , size (480,480) 로 설정한다.
-	if (m_Banrigan.OnAddRegisterData(1,1,-240,240,480,480) == false)
-	{
-		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
-		return;
-	}
-
-	// ---------- Register 2 삭제 & 등록 & 작성 ---------- //
-	// 3. 기존에 등록되어있던 Register 2를 삭제한다.
-	if (m_Banrigan.OnDeleteRegisterData(2) == false)
-	{
-		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
-		return;
-	}
-
-	// 4. Register 2번을 새로 추가한다. (POC 2->1 에서 '1'에 해당.)
-	if (m_Banrigan.OnAddRegisterData(2,1) == false)
-	{
-		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
-		return;
-	}
-
-	int orgX = GetDlgItemInt(IDC_EDIT_POCX);
-	int orgY = GetDlgItemInt(IDC_EDIT_POCY);
+	int regOrgX = GetDlgItemInt(IDC_EDIT_REGORGX);
+	int regOrgY = GetDlgItemInt(IDC_EDIT_REGORGY);
+	int regSize = GetDlgItemInt(IDC_EDIT_REGSIZE);
+	int refPosX = GetDlgItemInt(IDC_EDIT_REFPOSX);
+	int refPosY = GetDlgItemInt(IDC_EDIT_REFPOSY);
 	
-	memset(m_pPocBuf, 0, POC_WIDTH*POC_HEIGHT);
-
-	// 5. 마지막으로 취득한 이미지 (m_pImgBuf)에서 128x128 만큼 레퍼런스 이미지를 추출한다.
-	GetROIImage(orgX, orgY, CAMERA_WIDTH, CAMERA_HEIGHT, m_pImgBuf, POC_WIDTH, POC_HEIGHT, m_pPocBuf);
-
-	CDraw::DrawImage(GetDlgItem(IDC_PC_POC),m_pPocBuf,m_pPocBmpInfo,POC_WIDTH,POC_HEIGHT,false);
-
-	// 6. 추출한 레퍼런스 이미지를 Register 2번에 설정한다.
-	if (m_Banrigan.SetRegisterData(2,POC_WIDTH,POC_HEIGHT,POC_WIDTH/2,POC_HEIGHT/2,m_pPocBuf) == false)
+	CComboBox* pCB = (CComboBox*)GetDlgItem(IDC_CB_IMAGE);
+	int image	= pCB->GetCurSel();
+	if (m_Banrigan.OnAddRegisterData(regNum,image,regOrgX,regOrgY,regSize,refPosX,refPosY) == false)
 	{
 		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
 		return;
 	}
 
-	// 7. 모든 Register 데이터를 반리간에 저장한다.
-	if (m_Banrigan.OnSaveData(5,1) == false)
+	if (m_Banrigan.OnSaveData(6,regNum) == false)
 	{
 		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
 		return;
 	}
 }
 
-void CBanriganViewerDlg::GetROIImage(int nOrgX, int nOrgY, int nInWidth, int nInHeight, BYTE* pIn, int nOutWidth, int nOutHeight, BYTE* pOut)
+void CBanriganViewerDlg::OnBnClickedBtnGetregimg()
 {
-	for (int j=0; j<nInHeight; j++)
+	if (m_Banrigan.IsOpened() == false)
 	{
-		for (int i=0; i<nInWidth; i++)
-		{
-			if (j >= nOrgY && j < nOrgY + nOutHeight)
-				memcpy(pOut+(nOutWidth*(j-nOrgY)), pIn + (nInWidth*j) + nOrgX, nOutWidth);
-		}
+		AfxMessageBox(L"반리간이 연결되어 있지 않습니다.");
+		return;
 	}
+
+	int num = GetDlgItemInt(IDC_EDIT_REGNUM);
+
+	memset(m_pRegBuf, 0, REG_WIDTH*REG_HEIGHT);
+	if (m_Banrigan.GetRegisterImage(num, m_pRegBuf) == false)
+	{
+		CDraw::DrawImage(GetDlgItem(IDC_PC_REGISTER),m_pRegBuf,m_pPocBmpInfo,REG_WIDTH,REG_HEIGHT,false);
+		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
+		return;
+	}
+
+	CDraw::DrawImage(GetDlgItem(IDC_PC_REGISTER),m_pRegBuf,m_pPocBmpInfo,REG_WIDTH,REG_HEIGHT,false);
+}
+
+void CBanriganViewerDlg::OnUpdateRegister()
+{
+	int regOrgX = GetDlgItemInt(IDC_EDIT_REGORGX);
+	int regOrgY = GetDlgItemInt(IDC_EDIT_REGORGY);
+	int regSize = GetDlgItemInt(IDC_EDIT_REGSIZE);
+	int refPosX = GetDlgItemInt(IDC_EDIT_REFPOSX);
+	int refPosY = GetDlgItemInt(IDC_EDIT_REFPOSY);
+	regOrgX += 320;
+	regOrgY = 240 - regOrgY;
+	refPosX += 320;
+	refPosY = 240 - refPosY;
+	
+	int state = IsDlgButtonChecked(IDC_CHK_CROSSLINE);
+	CDraw::DrawImageWithROI(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,CAMERA_WIDTH,CAMERA_HEIGHT,regOrgX,regOrgY,regSize,refPosX,refPosY,state);
 }

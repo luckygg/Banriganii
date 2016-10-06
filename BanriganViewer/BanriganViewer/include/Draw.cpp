@@ -111,22 +111,16 @@ void CDraw::DrawMeasureImage(CWnd* pWnd, BYTE* pBuffer, BITMAPINFO* pBmpInfo, in
 		pen.DeleteObject();
 	}
 
-	float fH = (float)rect.Width() / nWidth;
-	float fV = (float)rect.Height() / nHeight;
-
 	float centerX = ((float)nWidth/2-1)+(fPocX);
 	float centerY = ((float)nHeight/2-1)-(fPocY);
 
-	float x = rect.Width() * centerX / 640;
-	float y = rect.Height() * centerY / 480;
-
 	CPen penPoc;
-	penPoc.CreatePen(PS_SOLID,1,RGB(0,255,255));
+	penPoc.CreatePen(PS_SOLID,1,RGB(0,255,0));
 	pOldPen = (CPen*)memDC.SelectObject(&penPoc);
-	memDC.MoveTo(x-5, y);
-	memDC.LineTo(x+5, y);
-	memDC.MoveTo(x, y-5);
-	memDC.LineTo(x, y+5);
+	memDC.MoveTo((int)centerX-5, (int)centerY);
+	memDC.LineTo((int)centerX+5, (int)centerY);
+	memDC.MoveTo((int)centerX, (int)centerY-5);
+	memDC.LineTo((int)centerX, (int)centerY+5);
 
 	memDC.SelectObject(pOldPen);
 	penPoc.DeleteObject();
@@ -141,7 +135,7 @@ void CDraw::DrawMeasureImage(CWnd* pWnd, BYTE* pBuffer, BITMAPINFO* pBmpInfo, in
 	bitmap.DeleteObject();
 }
 
-void CDraw::DrawImageWithROI(CWnd* pWnd, BYTE* pBuffer, BITMAPINFO* pBmpInfo, int nWidth, int nHeight, int nOrgX, int nOrgY)
+void CDraw::DrawImageWithROI(CWnd* pWnd, BYTE* pBuffer, BITMAPINFO* pBmpInfo, int nWidth, int nHeight, int nRegOrgX, int nRegOrgY, int nRegSize, int nRefPosX, int nRefPosY, bool bCross)
 {
 	if (pWnd == NULL) return;
 	if (pBuffer == NULL) return;
@@ -167,16 +161,37 @@ void CDraw::DrawImageWithROI(CWnd* pWnd, BYTE* pBuffer, BITMAPINFO* pBmpInfo, in
 	memDC.PatBlt(0, 0, rect.Width(), rect.Height(), WHITENESS); // 흰색으로 초기화
 
 	// ----- 지정된 영역에 본격적으로 그리기 시작 ----- //
-
 	SetStretchBltMode(memDC.GetSafeHdc(), HALFTONE); 
 	StretchDIBits(memDC.GetSafeHdc(), 0, 0, rect.Width(), rect.Height(), 0, 0, nWidth, nHeight, pBuffer, pBmpInfo, DIB_RGB_COLORS, SRCCOPY);
+	
+	CPen *pOldPen;
+	if (bCross == true)
+	{
+		CPen penCross;
+		penCross.CreatePen(PS_DOT,1,RGB(255,0,0));
+		pOldPen = (CPen*)memDC.SelectObject(&penCross);
+		memDC.MoveTo(0, rect.Height()/2);
+		memDC.LineTo(rect.Width(), rect.Height()/2);
+		memDC.MoveTo(rect.Width()/2, 0);
+		memDC.LineTo(rect.Width()/2, rect.Height());
 
-	float fH = (float)rect.Width() / nWidth;
-	float fV = (float)rect.Height() / nHeight;
+		memDC.SelectObject(pOldPen);
+		penCross.DeleteObject();
+	}
+	
+	CBrush brsPoc(RGB(0,0,255));
+	memDC.FrameRect(CRect(nRegOrgX,nRegOrgY,nRegOrgX+nRegSize,nRegOrgY+nRegSize),&brsPoc);
 
-	CBrush brsPoc(RGB(255,0,0));
-	memDC.FrameRect(CRect(nOrgX*fH,nOrgY*fV,(nOrgX+128)*fH,(nOrgY+128)*fV),&brsPoc);
-
+	CPen penOrg;
+	penOrg.CreatePen(PS_SOLID,1,RGB(255,0,0));
+	pOldPen = (CPen*)memDC.SelectObject(&penOrg);
+	int margin=5;
+	memDC.MoveTo(nRefPosX-margin, nRefPosY);
+	memDC.LineTo(nRefPosX+margin, nRefPosY);
+	memDC.MoveTo(nRefPosX, nRefPosY-margin);
+	memDC.LineTo(nRefPosX, nRefPosY+margin);
+	memDC.SelectObject(pOldPen);
+	penOrg.DeleteObject();
 	// ----- 그려진 메모리를 최종 디스플레이 -----//
 
 	// 메모리 DC를 화면 DC에 고속 복사

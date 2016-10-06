@@ -7,10 +7,10 @@
 #include "include/Banriganii.h"
 #include "include/Draw.h"
 
-#define CAMERA_WIDTH 640
-#define CAMERA_HEIGHT 480
-#define POC_WIDTH 128
-#define POC_HEIGHT 128
+#define CAMERA_WIDTH	640
+#define CAMERA_HEIGHT	480
+#define REG_WIDTH		128
+#define REG_HEIGHT		128
 
 // CBanriganViewerDlg dialog
 class CBanriganViewerDlg : public CDialogEx
@@ -27,7 +27,7 @@ public:
 
 public :
 	BYTE* m_pImgBuf;			// Image Buffer
-	BYTE* m_pPocBuf;			// POC(Register == Reference Image) Buffer
+	BYTE* m_pRegBuf;			// POC(Register == Reference Image) Buffer
 	BITMAPINFO* m_pImgBmpInfo;	// Image Buffer Bitmap Info
 	BITMAPINFO* m_pPocBmpInfo;	// POC(Reference Image) Buffer Bitmap Info
 	CBanrigan m_Banrigan;		// Banrigan Class
@@ -37,7 +37,6 @@ private :
 	void InitControls();
 	void CreateImgBmpInfo(int nWidth, int nHeight);
 	void CreatePocBmpInfo(int nWidth, int nHeight);
-	void GetROIImage(int nOrgX, int nOrgY, int nInWidth, int nInHeight, BYTE* pIn, int nOutWidth, int nOutHeight, BYTE* pOut);
 // Implementation
 protected:
 	HICON m_hIcon;
@@ -58,8 +57,8 @@ public:
 	
 	afx_msg void OnBnClickedBtnMeasure();
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
-	afx_msg void OnDeltaposSpinPocx(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnDeltaposSpinPocy(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedChkbtnSetpoc();
-	afx_msg void OnBnClickedBtnSetRegister();
+	afx_msg void OnBnClickedBtnWriteRegister();
+	afx_msg void OnBnClickedBtnGetregimg();
+	afx_msg void OnUpdateRegister();
 };

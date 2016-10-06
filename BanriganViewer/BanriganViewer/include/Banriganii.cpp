@@ -99,11 +99,12 @@ CString CBanrigan::GetErrorMessage(StCommonCmd Cmd, StCommonNG CmdNG)
 	case 19 : errMsg.Format(L"Message : 읽기 / 쓰기 주소 범위 벗어남."); break;
 	case 22 : errMsg.Format(L"Message : 이미지 데이터 없음."); break;
 	case 23 : errMsg.Format(L"Message : 지정한 카메라의 캡쳐 실패."); break;
+	case 25 : errMsg.Format(L"Message : 지정한 Register Data가 존재하지 않음."); break;
 	case 26 : errMsg.Format(L"Message : 플래시 메모리 용량 부족."); break;
 	case 32 : errMsg.Format(L"Message : DI 입력에 의한 처리 또는 PLC 명령이 실행 중이기 때문에 실행 불가."); break;
 	case 35 : errMsg.Format(L"Message : 워크 메모리 용량 부족."); break;
 	case 37 : errMsg.Format(L"Message : 지정한 결과 로그가 존재하지 않음."); break;
-	case 38 : errMsg.Format(L"Message : 지정한 응용 프로그램 Data Flow가 존재하지 않음."); break;
+	case 38 : errMsg.Format(L"Message : 지정한 Application Data Flow가 존재하지 않음."); break;
 	case 48 : errMsg.Format(L"Message : 시스템 데이터를 쓸 때 범위를 벗어남."); break;
 	}
 
@@ -229,7 +230,7 @@ bool CBanrigan::GetImage(const int nImage, BYTE* pBuffer)
 	ZeroMemory((void *)&RcvCmd,sizeof(RcvCmd));
 
 	SndCmd.Cmd.MsgSize	= 0x0010;   
-	SndCmd.Cmd.MainCode = CMD_IMAGE; 
+	SndCmd.Cmd.MainCode = CMD_GET_IMG; 
 	SndCmd.Cmd.MsgID	= 0x0000;
 	SndCmd.SubCode		= 0x0000;
 
@@ -280,7 +281,7 @@ bool CBanrigan::GetImage(const int nImage, BYTE* pBuffer)
 	return true;
 }
 
-bool CBanrigan::GetRegisterData(const int nRegNo, long &nRegPosX, long &nRegPosY, float &nRefPosX, float &nRefPosY, BYTE* pBuffer)
+bool CBanrigan::GetRegisterImage(const int nRegNo, BYTE* pBuffer)
 {
 	StSndGetRegData SndCmd;
 	StCommonCmd		RcvCmd;
@@ -310,12 +311,8 @@ bool CBanrigan::GetRegisterData(const int nRegNo, long &nRegPosX, long &nRegPosY
 	ZeroMemory((void *)&RcvOK,sizeof(RcvOK));
 	Receive((void *)&RcvOK,sizeof(RcvOK));
 
-	nRegPosX = RcvOK.RegPosX;
-	nRegPosY = RcvOK.RegPosY;
-	nRefPosX = RcvOK.RefPosX;
-	nRefPosY = RcvOK.RefPosY;
-
-	int len = RcvOK.RegSizeW * RcvOK.RegSizeH;
+	//128x128 고정.
+	int len = 128*128;
 
 	BYTE *buffer = new BYTE[len];
 	memset(buffer,0,len);
@@ -331,6 +328,46 @@ bool CBanrigan::GetRegisterData(const int nRegNo, long &nRegPosX, long &nRegPosY
 
 	delete []buffer;
 	buffer = NULL;
+
+	return true;
+}
+
+bool CBanrigan::GetRegisterData(const int nRegNo, long &nRegOrgX, long &nRegOrgY, int &nRegSizeW, int &nRegSizeH, float &nRefPosX, float &nRefPosY)
+{
+	StSndGetRegData SndCmd;
+	StCommonCmd		RcvCmd;
+	ZeroMemory((void *)&SndCmd,sizeof(SndCmd));
+	ZeroMemory((void *)&RcvCmd,sizeof(RcvCmd));
+
+	SndCmd.Cmd.MsgSize	= 0x0010;   
+	SndCmd.Cmd.MainCode = CMD_GET_REG; 
+	SndCmd.Cmd.MsgID	= 0x0000;
+	SndCmd.SubCode		= 0x0000;
+	SndCmd.RegNo		= nRegNo;
+
+	Send((void *)&SndCmd,sizeof(SndCmd));
+	Receive((void *)&RcvCmd,sizeof(RcvCmd));
+
+	if(RcvCmd.MainCode != 0x8135)
+	{
+		StCommonNG RcvNG;
+		ZeroMemory((void *)&RcvNG,sizeof(RcvNG));
+		Receive((void *)&RcvNG,sizeof(RcvNG));
+
+		m_strLastError = GetErrorMessage(RcvCmd, RcvNG);
+		return false;
+	}
+
+	StRcvGetRegData RcvOK;
+	ZeroMemory((void *)&RcvOK,sizeof(RcvOK));
+	Receive((void *)&RcvOK,sizeof(RcvOK));
+
+	nRegOrgX = RcvOK.RegOrgX;
+	nRegOrgY = RcvOK.RegOrgY;
+	nRegSizeW= RcvOK.RegSizeW;
+	nRegSizeH= RcvOK.RegSizeH;
+	nRefPosX = RcvOK.RefPosX;
+	nRefPosY = RcvOK.RefPosY;
 
 	return true;
 }
@@ -431,12 +468,16 @@ bool CBanrigan::OnDeleteRegisterData(const int nRegNo)
 	return true;
 }
 
-bool CBanrigan::OnAddRegisterData(const int nRegNo, const int nImage, const int nRegPosX, const int nRegPosY, const int nRegWidth, const int nRegHeight)
+bool CBanrigan::OnAddRegisterData(const int nRegNo, const int nImage, const int nRegOrgX, const int nRegOrgY, const int nRegSize, int nRefPosX, int nRefPosY)
 {
 	StSndAddRegData	SndCmd;
 	StCommonCmd		RcvCmd;
 	ZeroMemory((void *)&SndCmd,sizeof(SndCmd));
 	ZeroMemory((void *)&RcvCmd,sizeof(RcvCmd));
+
+	int img = nImage;
+	if (nImage > 3)
+		img = 0x001D + nImage;
 
 	SndCmd.Cmd.MsgSize	= 0x0060;   
 	SndCmd.Cmd.MainCode = CMD_ADD_REG; 
@@ -447,15 +488,15 @@ bool CBanrigan::OnAddRegisterData(const int nRegNo, const int nImage, const int 
 	SndCmd.System		= 0x0000;
 	SndCmd.Reserve1		= 0x0000;
 	SndCmd.Match		= 0x0001;
-	SndCmd.Image		= nImage;
-	SndCmd.RegPosX		= nRegPosX;
-	SndCmd.RegPosY		= nRegPosY;
-	SndCmd.RegSizeW		= nRegWidth;
-	SndCmd.RegSizeH		= nRegHeight;
+	SndCmd.Image		= img;
+	SndCmd.RegPosX		= nRegOrgX;
+	SndCmd.RegPosY		= nRegOrgY;
+	SndCmd.RegSizeW		= nRegSize;
+	SndCmd.RegSizeH		= nRegSize;
 	SndCmd.POCSizeW		= 0x0004;
 	SndCmd.POCSizeH		= 0x0004;
-	SndCmd.RefPosX		= 0x0000;
-	SndCmd.RefPosY		= 0x0000;
+	SndCmd.RefPosX		= nRefPosX;
+	SndCmd.RefPosY		= nRefPosY;
 	SndCmd.Mask			= 0x0000;
 	SndCmd.MaskPosX		= 0x0000;
 	SndCmd.MaskPosY		= 0x0000;
@@ -465,8 +506,6 @@ bool CBanrigan::OnAddRegisterData(const int nRegNo, const int nImage, const int 
 
 	Send((void *)&SndCmd,sizeof(SndCmd));
 	Receive((void *)&RcvCmd,sizeof(RcvCmd));
-
-	int n = sizeof(SndCmd);
 
 	if(RcvCmd.MainCode != 0x8137)
 	{
@@ -485,7 +524,7 @@ bool CBanrigan::OnAddRegisterData(const int nRegNo, const int nImage, const int 
 	return true;
 }
 
-bool CBanrigan::OnExecute(const int nGroup, const int nFlow, float* pResult, int nResultSize)
+bool CBanrigan::OnExecute(const int nGroup, const int nFlow, float* pResult, int &nResultSize)
 {
 	StSndExecute SndCmd;
 	StCommonCmd  RcvCmd;
@@ -518,7 +557,13 @@ bool CBanrigan::OnExecute(const int nGroup, const int nFlow, float* pResult, int
 	ZeroMemory((void *)&RcvOK,sizeof(RcvOK));
 	Receive((void *)&RcvOK,sizeof(RcvOK));
 
-	Receive((void *)pResult, sizeof(float)*nResultSize);
+	// 응답 정상 시 msg-size = 0x18h + Flow 종합 결과 크기
+	// 또한, 공통 결과수가 16개 기본이므로 유저가 설정한 결과 개수는 아래와 같이 계산한다.
+	int size = (RcvCmd.MsgSize-0x18)/4 - 16;
+	nResultSize = size;
+	int data[16]={0,};
+	//Receive((void *)data, sizeof(int)*(16));
+	Receive((void *)pResult, sizeof(float)*(size+16));
 
 	return true;
 }

@@ -63,13 +63,20 @@ public:
 	//******************************************************************************************************************
 	/// \brief					BANRIGAN의 특정 레지스터 데이터 취득.
 	/// \param [in]  nRegNo		레지스터 번호 (1 ~ 400).
-	/// \param [out] nRegPosX	이미지 시작 위치 X.
-	/// \param [out] nRegPosY	이미지 시작 위치 Y.
+	/// \param [out] nRegOrgX	이미지 시작 위치 X.
+	/// \param [out] nRegOrgY	이미지 시작 위치 Y.
+	/// \param [out] nRegSizeW	이미지 가로 사이즈.
+	/// \param [out] nRegSizeH	이미지 세로 사이즈.
 	/// \param [out] nRefPosX	기준점 좌표 X.
 	/// \param [out] nRefPosY	기준점 좌표 Y.
-	/// \param [out] pBuffer	출력 이미지.
 	/// \param bool				결과 반환.
-	bool GetRegisterData(const int nRegNo, long &nRegPosX, long &nRegPosY, float &nRefPosX, float &nRefPosY, BYTE* pBuffer);
+	bool GetRegisterData(const int nRegNo, long &nRegOrgX, long &nRegOrgY, int &nRegSizeW, int &nRegSizeH, float &nRefPosX, float &nRefPosY);
+	//******************************************************************************************************************
+	/// \brief					BANRIGAN의 특정 레지스터 이미지 취득.
+	/// \param [in]  nRegNo		레지스터 번호 (1 ~ 400).
+	/// \param [out] pBuffer	이미지 데이터. ※ 출력되는 이미지 크기는 128x128만 가능.
+	/// \param bool				결과 반환.
+	bool GetRegisterImage(const int nRegNo, BYTE* pBuffer);
 	//******************************************************************************************************************
 	/// \brief					BANRIGAN의 특정 레지스터 데이터 적용.
 	/// \param [in] nRegNo		레지스터 번호 (1 ~ 400).
@@ -89,12 +96,14 @@ public:
 	/// \brief					BANRIGAN의 특정 레지스터 데이터 추가.
 	/// \param [in] nRegNo		레지스터 번호 (1 ~ 400).
 	/// \param [in] nImage		1:CAM1, 2:CAM2, 3:CAM3, 4:CAM4.
-	/// \param [in] nRegPosX	이미지 데이터 시작 위치 X 방향(기본값 0).
-	/// \param [in] nRegPosY	이미지 데이터 시작 위치 Y 방향(기본값 0).
-	/// \param [in] nRegWidth	이미지 데이터 가로 사이즈(기본값 128).
-	/// \param [in] nRegHeight	이미지 데이터 세로 사이즈(기본값 128).
+	/// \param [in] nRegOrgX	이미지 데이터 시작 위치 X 방향.
+	/// \param [in] nRegOrgY	이미지 데이터 시작 위치 Y 방향.
+	/// \param [in] nRegWidth	이미지 데이터 가로 사이즈.
+	/// \param [in] nRegHeight	이미지 데이터 세로 사이즈.
+	/// \param [in] nRefPosX	매칭 화상 기준점 X 좌표.
+	/// \param [in] nRefPosY	매칭 화상 기준점 Y 좌표.
 	/// \param bool				결과 반환.
-	bool OnAddRegisterData(const int nRegNo, const int nImage, const int nRegPosX=0, const int nRegPosY=0, const int nRegWidth=128, const int nRegHeight=128);
+	bool OnAddRegisterData(const int nRegNo, const int nImage, const int nRegOrgX, const int nRegOrgY, const int nRegSize, int nRefPosX, int nRefPosY);
 	//******************************************************************************************************************
 	/// \brief					BANRIGAN의 Application Flow를 처음부터 실행.
 	/// \param [in] nGroup		0:현재 워크 그룹 번호, 1~16 워크 그룹 번호 설정
@@ -102,8 +111,7 @@ public:
 	/// \param [Out] pResult	결과 값이 반환될 포인터.
 	/// \param [in] nResultSize	결과 값이 반환될 포인터의 사이즈(공통 결과 수 16개 + 유저 결과 수).
 	/// \param bool				결과 반환.
-	bool OnExecute(const int nGroup, const int nFlow, float* pResult, int nResultSize);
-	
+	bool OnExecute(const int nGroup, const int nFlow, float* pResult, int &nResultSize);
 private :
 	CString GetErrorMessage(StCommonCmd Cmd, StCommonNG CmdNG);
 };

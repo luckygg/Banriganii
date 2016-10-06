@@ -2,7 +2,7 @@
 
 #define	CMD_SAVE		0x0104
 #define	CMD_MONITOR		0x0105
-#define	CMD_IMAGE		0x0132
+#define	CMD_GET_IMG		0x0132
 #define	CMD_GET_REG		0x0135
 #define	CMD_SET_REG		0x0136
 #define CMD_ADD_REG		0x0137
@@ -113,8 +113,8 @@ struct	StRcvGetRegData
 	unsigned long	Reg;
 	unsigned long	Match;
 	unsigned long	Reserve1;
-	long			RegPosX;
-	long			RegPosY;
+	long			RegOrgX;
+	long			RegOrgY;
 	unsigned long	RegSizeW;
 	unsigned long	RegSizeH;
 	unsigned long	POCSizeW;
@@ -211,3 +211,19 @@ struct	StRcvSaveData
 	unsigned long	SubCode;
 	unsigned long	RegNo;
 };
+
+//////////////////////////////////////////////////////////////////////////
+//----- Set Flow Command -----//
+struct StSndSetFlow
+{
+	StCommonCmd		Cmd;
+	unsigned long	SubCode;
+	unsigned long	FlowNo;
+};
+
+struct StRcvSetFlow
+{
+	unsigned long	SubCode;
+	unsigned long	FlowNo;
+};
+
