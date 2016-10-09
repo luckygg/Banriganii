@@ -2,6 +2,7 @@
 
 #define	CMD_SAVE		0x0104
 #define	CMD_MONITOR		0x0105
+#define CMD_SET_USR		0x0131
 #define	CMD_GET_IMG		0x0132
 #define	CMD_GET_REG		0x0135
 #define	CMD_SET_REG		0x0136
@@ -206,24 +207,27 @@ struct StSndSaveData
 	unsigned long	Type;
 };
 
-struct	StRcvSaveData		
+struct StRcvSaveData
 {
 	unsigned long	SubCode;
 	unsigned long	RegNo;
 };
 
-//////////////////////////////////////////////////////////////////////////
-//----- Set Flow Command -----//
-struct StSndSetFlow
+//----- Set Register Data Command -----//
+struct StSndUserData
 {
 	StCommonCmd		Cmd;
 	unsigned long	SubCode;
-	unsigned long	FlowNo;
+	unsigned long	Target;
+	unsigned long	Address;
+	unsigned long	Num;
 };
 
-struct StRcvSetFlow
+struct StRcvUserData
 {
 	unsigned long	SubCode;
-	unsigned long	FlowNo;
+	unsigned long	Target;
+	unsigned long	Variable;
+	unsigned long	Address;
+	unsigned long	Num;
 };
-
