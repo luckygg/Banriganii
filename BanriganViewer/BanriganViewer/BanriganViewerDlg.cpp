@@ -51,6 +51,7 @@ BEGIN_MESSAGE_MAP(CBanriganViewerDlg, CDialogEx)
 	ON_EN_UPDATE(IDC_EDIT_REGSIZE, &CBanriganViewerDlg::OnUpdateRegister)
 	ON_EN_UPDATE(IDC_EDIT_REFPOSX, &CBanriganViewerDlg::OnUpdateRegister)
 	ON_EN_UPDATE(IDC_EDIT_REFPOSY, &CBanriganViewerDlg::OnUpdateRegister)
+	ON_BN_CLICKED(IDC_BTN_TEST, &CBanriganViewerDlg::OnBnClickedBtnTest)
 END_MESSAGE_MAP()
 
 
@@ -664,4 +665,11 @@ void CBanriganViewerDlg::OnUpdateRegister()
 	
 	int state = IsDlgButtonChecked(IDC_CHK_CROSSLINE);
 	CDraw::DrawImageWithROI(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,CAMERA_WIDTH,CAMERA_HEIGHT,regOrgX,regOrgY,regSize,refPosX,refPosY,state);
+}
+
+void CBanriganViewerDlg::OnBnClickedBtnTest()
+{
+	m_Banrigan.SetUserData(1,0);
+	m_Banrigan.SetUserData(2,-10);
+	m_Banrigan.SetUserData(3,10);
 }

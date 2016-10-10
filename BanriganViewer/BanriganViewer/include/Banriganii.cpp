@@ -567,3 +567,44 @@ bool CBanrigan::OnExecute(const int nGroup, const int nFlow, float* pResult, int
 
 	return true;
 }
+
+bool CBanrigan::SetUserData(const int nUserNo, long lData)
+{
+	StSndSetUserData SndCmd;
+	StCommonCmd		 RcvCmd;
+	ZeroMemory((void *)&SndCmd,sizeof(SndCmd));
+	ZeroMemory((void *)&RcvCmd,sizeof(RcvCmd));
+
+	SndCmd.Cmd.MsgSize	= 0x0018 + 1*sizeof(long); // msg-size = 0x0018 + [Data Count] * [data size]
+	SndCmd.Cmd.MainCode = CMD_SET_USR;
+	SndCmd.Cmd.MsgID	= 0x0000;
+	SndCmd.Target		= 0x0102;
+	// 0x0101 : User Data [Integer] : 전체 데이터
+	// 0x0102 : User Data [Integer] : 현재 값만
+	// 0x0103 : User Data [Integer] : 설정 값만
+	// 0x0201 : User Data [Real]	: 전체 데이터
+	// 0x0202 : User Data [Real]	: 현재 값만
+	// 0x0203 : User Data [Real]	: 설정 값만
+	SndCmd.Address		= nUserNo;
+	SndCmd.Num			= 1; // Data Count
+
+	Send((void *)&SndCmd,sizeof(SndCmd));
+	Send((void *)&lData,sizeof(long));
+
+	Receive((void *)&RcvCmd,sizeof(RcvCmd));
+	if(RcvCmd.MainCode != 0x8131)
+	{
+		StCommonNG RcvNG;
+		ZeroMemory((void *)&RcvNG,sizeof(RcvNG));
+		Receive((void *)&RcvNG,sizeof(RcvNG));
+
+		m_strLastError = GetErrorMessage(RcvCmd, RcvNG);
+		return false;
+	}
+
+	StRcvSetUserData RcvOK;
+	ZeroMemory((void *)&RcvOK,sizeof(RcvOK));
+	Receive((void *)&RcvOK,sizeof(RcvOK));
+
+	return true;
+}

@@ -214,7 +214,7 @@ struct StRcvSaveData
 };
 
 //----- Set Register Data Command -----//
-struct StSndUserData
+struct StSndSetUserData
 {
 	StCommonCmd		Cmd;
 	unsigned long	SubCode;
@@ -223,7 +223,7 @@ struct StSndUserData
 	unsigned long	Num;
 };
 
-struct StRcvUserData
+struct StRcvSetUserData
 {
 	unsigned long	SubCode;
 	unsigned long	Target;

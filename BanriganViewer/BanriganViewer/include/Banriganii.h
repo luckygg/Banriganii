@@ -88,6 +88,12 @@ public:
 	/// \param bool				결과 반환.
 	bool SetRegisterData(const int nRegNo, const int nWidth, const int nHeight, const int nRegPosX, const int nRegPosY, const BYTE* pBuffer);
 	//******************************************************************************************************************
+	/// \brief					BANRIGAN의 특정 유저 데이터 적용.
+	/// \param [in] nUserNo		유저 데이터 번호 (1 ~ 1024).
+	/// \param [in] lData		유저 데이터 설정 값.
+	/// \param bool				결과 반환.
+	bool SetUserData(const int nUserNo, long lData);
+	//******************************************************************************************************************
 	/// \brief					BANRIGAN의 특정 레지스터 데이터 제거.
 	/// \param [in] nRegNo		레지스터 번호 (1 ~ 400).
 	/// \param bool				결과 반환.
