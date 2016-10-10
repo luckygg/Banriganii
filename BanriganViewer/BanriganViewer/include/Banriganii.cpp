@@ -475,7 +475,7 @@ bool CBanrigan::OnAddRegisterData(const int nRegNo, const int nImage, const int 
 	ZeroMemory((void *)&SndCmd,sizeof(SndCmd));
 	ZeroMemory((void *)&RcvCmd,sizeof(RcvCmd));
 
-	int img = nImage;
+	int img = nImage+1;
 	if (nImage > 3)
 		img = 0x001D + nImage;
 

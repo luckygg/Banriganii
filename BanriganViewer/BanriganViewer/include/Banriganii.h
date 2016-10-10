@@ -46,7 +46,7 @@ public:
 	/// \param [in] nType		0:시스템 정보, 1:현재 워크 그룹 번호, 2:모든 사용자 변수 (정수형 + 실수형), 3:사용자 변수 [정수], 4:사용자 변수 [실수], 5:전체 레지스터 데이터. 6:특정 레지스터 데이터
 	/// \param [in] nRegNo		레지스터 번호 (1 ~ 400).
 	/// \param bool				결과 반환.
-	bool OnSaveData(const int nType, const int nRegNo);
+	bool OnSaveData(const int nType, const int nRegNo=0);
 	//******************************************************************************************************************
 	/// \brief					BANRIGAN의 모니터 화면을 설정.
 	/// \param [in] nImage		0:1 Display, 1:2 Display, 2:4 Display.

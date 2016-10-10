@@ -61,5 +61,4 @@ public:
 	afx_msg void OnBnClickedBtnWriteRegister();
 	afx_msg void OnBnClickedBtnGetregimg();
 	afx_msg void OnUpdateRegister();
-	afx_msg void OnBnClickedBtnTest();
 };

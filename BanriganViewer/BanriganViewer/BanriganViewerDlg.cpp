@@ -51,7 +51,6 @@ BEGIN_MESSAGE_MAP(CBanriganViewerDlg, CDialogEx)
 	ON_EN_UPDATE(IDC_EDIT_REGSIZE, &CBanriganViewerDlg::OnUpdateRegister)
 	ON_EN_UPDATE(IDC_EDIT_REFPOSX, &CBanriganViewerDlg::OnUpdateRegister)
 	ON_EN_UPDATE(IDC_EDIT_REFPOSY, &CBanriganViewerDlg::OnUpdateRegister)
-	ON_BN_CLICKED(IDC_BTN_TEST, &CBanriganViewerDlg::OnBnClickedBtnTest)
 END_MESSAGE_MAP()
 
 
@@ -602,7 +601,8 @@ void CBanriganViewerDlg::OnBnClickedBtnWriteRegister()
 	}
 
 	int regNum = GetDlgItemInt(IDC_EDIT_REGNUM);
-	// 레지스터 데이터를 수정하는 경우, 기존 데이터는 반드시 지우고 새로 생성하여 작성해야 함.
+	// 레지스터 데이터를 수정하는 경우, 기존 레지스터를 반드시 지우고 새로 생성하여 작성해야 함.
+	// 1. Delete Register Data
 	if (m_Banrigan.OnDeleteRegisterData(regNum) == false)
 	{
 		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
@@ -617,12 +617,33 @@ void CBanriganViewerDlg::OnBnClickedBtnWriteRegister()
 	
 	CComboBox* pCB = (CComboBox*)GetDlgItem(IDC_CB_IMAGE);
 	int image	= pCB->GetCurSel();
+	// 2. Add Register Data
 	if (m_Banrigan.OnAddRegisterData(regNum,image,regOrgX,regOrgY,regSize,refPosX,refPosY) == false)
 	{
 		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
 		return;
 	}
 
+	// 3. Modify User Data
+	// 1번 User 데이터에 regOrgX 값을 설정.
+	if (m_Banrigan.SetUserData(1, regOrgX) == false)
+	{
+		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
+		return;
+	}
+	// 2번 User 데이터에 regOrgY 값을 설정.
+	if (m_Banrigan.SetUserData(2, regOrgY) == false)
+	{
+		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
+		return;
+	}
+	// User 변수[정수] 저장.
+	if (m_Banrigan.OnSaveData(3) == false)
+	{
+		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
+		return;
+	}
+	// 현재 레지스터 저장.
 	if (m_Banrigan.OnSaveData(6,regNum) == false)
 	{
 		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
@@ -665,11 +686,4 @@ void CBanriganViewerDlg::OnUpdateRegister()
 	
 	int state = IsDlgButtonChecked(IDC_CHK_CROSSLINE);
 	CDraw::DrawImageWithROI(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,CAMERA_WIDTH,CAMERA_HEIGHT,regOrgX,regOrgY,regSize,refPosX,refPosY,state);
-}
-
-void CBanriganViewerDlg::OnBnClickedBtnTest()
-{
-	m_Banrigan.SetUserData(1,0);
-	m_Banrigan.SetUserData(2,-10);
-	m_Banrigan.SetUserData(3,10);
 }
