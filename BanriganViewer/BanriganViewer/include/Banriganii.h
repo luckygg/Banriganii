@@ -111,12 +111,12 @@ public:
 	/// \param bool				결과 반환.
 	bool OnAddRegisterData(const int nRegNo, const int nImage, const int nRegOrgX, const int nRegOrgY, const int nRegSize, int nRefPosX, int nRefPosY);
 	//******************************************************************************************************************
-	/// \brief					BANRIGAN의 Application Flow를 처음부터 실행.
-	/// \param [in] nGroup		0:현재 워크 그룹 번호, 1~16 워크 그룹 번호 설정
-	/// \param [in] nFlow		0:현재 흐름 번호, 1~64 흐름 번호 설정
-	/// \param [Out] pResult	결과 값이 반환될 포인터.
-	/// \param [in] nResultSize	결과 값이 반환될 포인터의 사이즈(공통 결과 수 16개 + 유저 결과 수).
-	/// \param bool				결과 반환.
+	/// \brief					 BANRIGAN의 Application Flow를 처음부터 실행.
+	/// \param [in]  nGroup		 0:현재 워크 그룹 번호, 1~16 워크 그룹 번호 설정
+	/// \param [in]  nFlow		 0:현재 흐름 번호, 1~64 흐름 번호 설정
+	/// \param [Out] pResult	 결과 값이 반환될 포인터.
+	/// \param [in]  nResultSize 결과 값이 반환될 포인터의 사이즈(공통 결과 수 16개 + 유저 결과 수).
+	/// \param bool				 결과 반환.
 	bool OnExecute(const int nGroup, const int nFlow, float* pResult, int &nResultSize);
 private :
 	CString GetErrorMessage(StCommonCmd Cmd, StCommonNG CmdNG);

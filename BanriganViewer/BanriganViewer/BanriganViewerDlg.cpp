@@ -532,6 +532,7 @@ void CBanriganViewerDlg::OnBnClickedBtnMeasure()
 	SetDlgItemText(IDC_LB_TIME2,L"");
 
 	// 최대 64개의 데이터를 취득한다고 가정.
+	// 0~15까지는 전체 결과물이고, 그 다음부터가 유저가 설정한 결과물이다.
 	float result[64] = {0,};
 	int resultSize=0;
 	int group = GetDlgItemInt(IDC_EDIT_GROUP);
@@ -557,7 +558,8 @@ void CBanriganViewerDlg::OnBnClickedBtnMeasure()
 	bool ret=false;
 	int state = IsDlgButtonChecked(IDC_CHK_CROSSLINE);
 
-	//POC2단계 사용 시 출력되는 데이터가 10개이므로 resultSize가 5보다 크다는 것은 POC2단계라고 판단.
+	// POC 1개당 출력되는 데이터를 5개로 설정.
+	// POC 2개일 경우 출력되는 데이터는 10개라고 판단.
 	if (resultSize > 5)
 		CDraw::DrawMeasureImage(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,CAMERA_WIDTH,CAMERA_HEIGHT,result[21],result[22],state); // POC 2단계 결과의 중심 좌표.
 	else
@@ -565,28 +567,28 @@ void CBanriganViewerDlg::OnBnClickedBtnMeasure()
 
 	CString value=L"";
 	
-	value.Format(L"%.3f", result[16]);
+	value.Format(L"%.3f", result[16]);	// POC 1 - Measurement Value X
 	SetDlgItemText(IDC_LB_POSX1,value);
-	value.Format(L"%.3f", result[17]);
+	value.Format(L"%.3f", result[17]);	// POC 1 - Measurement Value Y
 	SetDlgItemText(IDC_LB_POSY1,value);
-	value.Format(L"%.3f", result[18]);
+	value.Format(L"%.3f", result[18]);	// POC 1 - Measurement Value Theta
 	SetDlgItemText(IDC_LB_THETA1,value);
-	value.Format(L"%.0f", result[19]);
+	value.Format(L"%.0f", result[19]);	// POC 1 - Accuracy
 	SetDlgItemText(IDC_LB_SCORE1,value);
-	value.Format(L"%.0f", result[20]);
+	value.Format(L"%.0f", result[20]);	// POC 1 - Processing Time
 	SetDlgItemText(IDC_LB_TIME1,value);
 
 	if (resultSize > 5)
 	{
-		value.Format(L"%.3f", result[21]);
+		value.Format(L"%.3f", result[21]);	// POC 2 - Measurement Value X
 		SetDlgItemText(IDC_LB_POSX2,value);
-		value.Format(L"%.3f", result[22]);
+		value.Format(L"%.3f", result[22]);	// POC 2 - Measurement Value Y
 		SetDlgItemText(IDC_LB_POSY2,value);
-		value.Format(L"%.3f", result[23]);
+		value.Format(L"%.3f", result[23]);	// POC 2 - Measurement Value Theta
 		SetDlgItemText(IDC_LB_THETA2,value);
-		value.Format(L"%.0f", result[24]);
+		value.Format(L"%.0f", result[24]);	// POC 2 - Accuracy
 		SetDlgItemText(IDC_LB_SCORE2,value);
-		value.Format(L"%.0f", result[25]);
+		value.Format(L"%.0f", result[25]);	// POC 2 - Processing Time
 		SetDlgItemText(IDC_LB_TIME2,value);
 	}
 }
