@@ -90,9 +90,9 @@ public:
 	//******************************************************************************************************************
 	/// \brief					BANRIGAN의 특정 유저 데이터 적용.
 	/// \param [in] nUserNo		유저 데이터 번호 (1 ~ 1024).
-	/// \param [in] lData		유저 데이터 설정 값.
+	/// \param [in] nData		유저 데이터 설정 값.
 	/// \param bool				결과 반환.
-	bool SetUserData(const int nUserNo, long lData);
+	bool SetUserData(const int nUserNo, int nData);
 	//******************************************************************************************************************
 	/// \brief					BANRIGAN의 특정 레지스터 데이터 제거.
 	/// \param [in] nRegNo		레지스터 번호 (1 ~ 400).

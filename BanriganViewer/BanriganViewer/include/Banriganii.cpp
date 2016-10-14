@@ -37,7 +37,7 @@ bool CBanrigan::OpenPort(CString strIP, int nPort)
 	}
 
 	BOOL ret = Connect(strIP,nPort);
-	
+
 	if (ret == TRUE)
 	{
 		m_bOpened = true;
@@ -115,7 +115,7 @@ bool CBanrigan::OnSaveData(const int nType, const int nRegNo)
 {
 	StSndSaveData	SndCmd;
 	StCommonCmd		RcvCmd;
-	
+
 	ZeroMemory((void *)&SndCmd,sizeof(SndCmd));
 	ZeroMemory((void *)&RcvCmd,sizeof(RcvCmd));
 
@@ -256,7 +256,7 @@ bool CBanrigan::GetImage(const int nImage, BYTE* pBuffer)
 		m_strLastError = GetErrorMessage(RcvCmd, RcvNG);
 		return false;
 	}
-	
+
 	StRcvGetImage RcvOK;
 	ZeroMemory((void *)&RcvOK,sizeof(RcvOK));
 	Receive((void *)&RcvOK,sizeof(RcvOK));
@@ -382,7 +382,7 @@ bool CBanrigan::SetRegisterData(const int nRegNo, const int nWidth, const int nH
 	SndCmd.Cmd.MsgSize	= 0x0060 + (nWidth*nHeight);   
 	SndCmd.Cmd.MainCode = CMD_SET_REG; 
 	SndCmd.Cmd.MsgID	= 0x0000;
-	
+
 	SndCmd.SubCode	= 0x0000;
 	SndCmd.RegNo	= nRegNo;
 	SndCmd.Version  = 0x0000;	// 0 으로 설정.
@@ -528,10 +528,10 @@ bool CBanrigan::OnExecute(const int nGroup, const int nFlow, float* pResult, int
 {
 	StSndExecute SndCmd;
 	StCommonCmd  RcvCmd;
-	
+
 	ZeroMemory((void *)&SndCmd,sizeof(SndCmd));
 	ZeroMemory((void *)&RcvCmd,sizeof(RcvCmd));
-	
+
 	SndCmd.Cmd.MsgSize	= 0x0018;   
 	SndCmd.Cmd.MainCode = CMD_EXECUTE; 
 	SndCmd.Cmd.MsgID	= 0x0000;
@@ -568,17 +568,25 @@ bool CBanrigan::OnExecute(const int nGroup, const int nFlow, float* pResult, int
 	return true;
 }
 
-bool CBanrigan::SetUserData(const int nUserNo, long lData)
+//2016-10-14 ggkim
+// long -> int 변경.
+//bool CBanrigan::SetUserData(const int nUserNo, long lData)
+bool CBanrigan::SetUserData(const int nUserNo, int nData)
 {
 	StSndSetUserData SndCmd;
 	StCommonCmd		 RcvCmd;
 	ZeroMemory((void *)&SndCmd,sizeof(SndCmd));
 	ZeroMemory((void *)&RcvCmd,sizeof(RcvCmd));
 
-	SndCmd.Cmd.MsgSize	= 0x0018 + 1*sizeof(long); // msg-size = 0x0018 + [Data Count] * [data size]
+	//2016-10-14 ggkim
+	//SndCmd.Cmd.MsgSize	= 0x0018 + 1*sizeof(long); 사이즈 변경.
+	SndCmd.Cmd.MsgSize	= 0x0018 + 1*sizeof(long)*5; // msg-size = 0x0018 + [Data Count] * [data size]
 	SndCmd.Cmd.MainCode = CMD_SET_USR;
 	SndCmd.Cmd.MsgID	= 0x0000;
-	SndCmd.Target		= 0x0102;
+	SndCmd.SubCode		= 0x0000;
+	SndCmd.Target		= 0x0101; 
+	//2016-10-14 ggkim
+	//0x103 -> 0x101 변경.
 	// 0x0101 : User Data [Integer] : 전체 데이터
 	// 0x0102 : User Data [Integer] : 현재 값만
 	// 0x0103 : User Data [Integer] : 설정 값만
@@ -589,7 +597,17 @@ bool CBanrigan::SetUserData(const int nUserNo, long lData)
 	SndCmd.Num			= 1; // Data Count
 
 	Send((void *)&SndCmd,sizeof(SndCmd));
-	Send((void *)&lData,sizeof(long));
+
+	//2016-10-14 ggkim
+	//현재 데이터에서 전체 데이터 저장으로 변경.
+	//long -> int 변경.
+	//Send((void *)&lData,sizeof(long));
+	//현재값 Parameter 정보[4B] /  현재값[4B] / 초기값 Parameter 정보[4B] / 초기값[4B] / 초기화 타이밍[4B]
+	int wrData[5] = {0,};
+	wrData[1] = nData;
+	wrData[3] = nData;
+	int size = sizeof(wrData);
+	Send((void *)&wrData,sizeof(wrData));
 
 	Receive((void *)&RcvCmd,sizeof(RcvCmd));
 	if(RcvCmd.MainCode != 0x8131)
