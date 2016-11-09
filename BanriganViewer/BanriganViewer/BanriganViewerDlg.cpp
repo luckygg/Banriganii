@@ -51,6 +51,7 @@ BEGIN_MESSAGE_MAP(CBanriganViewerDlg, CDialogEx)
 	ON_EN_UPDATE(IDC_EDIT_REGSIZE, &CBanriganViewerDlg::OnUpdateRegister)
 	ON_EN_UPDATE(IDC_EDIT_REFPOSX, &CBanriganViewerDlg::OnUpdateRegister)
 	ON_EN_UPDATE(IDC_EDIT_REFPOSY, &CBanriganViewerDlg::OnUpdateRegister)
+	ON_BN_CLICKED(IDC_BTN_ALARMRESET, &CBanriganViewerDlg::OnBnClickedBtnAlarmreset)
 END_MESSAGE_MAP()
 
 
@@ -108,6 +109,9 @@ void CBanriganViewerDlg::InitControls()
 
 	pCB = (CComboBox*)GetDlgItem(IDC_CB_MEASURE);
 	pCB->SetCurSel(0);
+
+	pCB = (CComboBox*)GetDlgItem(IDC_CB_RESET);
+	pCB->SetCurSel(5);
 
 	// ----- Edit & Spin Control ----- //
 	UDACCEL accels[] = {{-1,1}};
@@ -688,4 +692,23 @@ void CBanriganViewerDlg::OnUpdateRegister()
 	
 	int state = IsDlgButtonChecked(IDC_CHK_CROSSLINE);
 	CDraw::DrawImageWithROI(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,CAMERA_WIDTH,CAMERA_HEIGHT,regOrgX,regOrgY,regSize,refPosX,refPosY,state);
+}
+
+void CBanriganViewerDlg::OnBnClickedBtnAlarmreset()
+{
+	if (m_Banrigan.IsOpened() == false)
+	{
+		AfxMessageBox(L"반리간이 연결되어 있지 않습니다.");
+		return;
+	}
+
+	CComboBox* pCB = (CComboBox*)GetDlgItem(IDC_CB_RESET);
+	int sel = pCB->GetCurSel();
+	if (m_Banrigan.OnReset(sel) == false)
+	{
+		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
+		return;
+	}
+
+	AfxMessageBox(L"리셋 완료.");
 }

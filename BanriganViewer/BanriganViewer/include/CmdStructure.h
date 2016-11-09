@@ -1,5 +1,6 @@
 #pragma once
 
+#define CMD_RESET		0x0102
 #define	CMD_SAVE		0x0104
 #define	CMD_MONITOR		0x0105
 #define CMD_SET_USR		0x0131
@@ -230,4 +231,17 @@ struct StRcvSetUserData
 	unsigned long	Variable;
 	unsigned long	Address;
 	unsigned long	Num;
+};
+
+//----- Reset Command -----//
+struct StSndReset
+{
+	StCommonCmd		Cmd;
+	unsigned long	SubCode;
+	unsigned long	Type;
+};
+
+struct StRcvReset
+{
+	unsigned long	SubCode;
 };

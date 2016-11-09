@@ -1,7 +1,13 @@
-// BanriganAction.h : header file
-#if _MSC_VER > 1000
+//----------------------------------------------------------
+// Banrigan ii Class
+//----------------------------------------------------------
+// Programmed by William Kim
+//----------------------------------------------------------
+// Last Update : 2016-11-09 15:07
+// Modified by William Kim
+//----------------------------------------------------------
+
 #pragma once
-#endif
 
 #include "CmdStructure.h"
 #include "afxsock.h"
@@ -118,6 +124,12 @@ public:
 	/// \param [in]  nResultSize 결과 값이 반환될 포인터의 사이즈(공통 결과 수 16개 + 유저 결과 수).
 	/// \param bool				 결과 반환.
 	bool OnExecute(const int nGroup, const int nFlow, float* pResult, int &nResultSize);
+	//******************************************************************************************************************
+	/// \brief					 BANRIGAN의 각종 리셋을 실행.
+	/// \param [in]  nType		 0:실행 상태, 1:Flow 실행 결과, 2:User변수[현재값], 3:화상 데이터, 4:로그 데이터, 5:알람 리셋, 6:소프트웨어 리셋, 7:하드웨어 리셋
+	/// \param bool				 결과 반환.
+	bool OnReset(const int nType);
+
 private :
 	CString GetErrorMessage(StCommonCmd Cmd, StCommonNG CmdNG);
 };

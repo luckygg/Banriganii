@@ -626,3 +626,57 @@ bool CBanrigan::SetUserData(const int nUserNo, int nData)
 
 	return true;
 }
+
+bool CBanrigan::OnReset(const int nType)
+{
+	StSndReset	SndCmd;
+	StCommonCmd RcvCmd;
+
+	ZeroMemory((void *)&SndCmd,sizeof(SndCmd));
+	ZeroMemory((void *)&RcvCmd,sizeof(RcvCmd));
+
+	SndCmd.Cmd.MsgSize	= 0x0010;   
+	SndCmd.Cmd.MainCode = CMD_RESET; 
+	SndCmd.Cmd.MsgID	= 0x0000;
+	SndCmd.SubCode		= 0x0000;
+	
+	switch (nType)
+	{
+	case 0:
+	case 1:
+	case 2:
+	case 3:
+	case 4:
+		SndCmd.Type	= nType;
+		break;
+	case 5:
+		SndCmd.Type	= 0x0100;
+		break;
+	case 6:
+		SndCmd.Type	= 0x0200;
+		break;
+	case 7:
+		SndCmd.Type	= 0x8000;
+		break;
+	}
+
+	Send((void *)&SndCmd,sizeof(SndCmd));
+
+	Receive((void *)&RcvCmd,sizeof(RcvCmd));
+
+	if(RcvCmd.MainCode != 0x8102)
+	{
+		StCommonNG RcvNG;
+		ZeroMemory((void *)&RcvNG,sizeof(RcvNG));
+		Receive((void *)&RcvNG,sizeof(RcvNG));
+
+		m_strLastError = GetErrorMessage(RcvCmd, RcvNG);
+		return false;
+	}
+
+	StRcvReset RcvOK;
+	ZeroMemory((void *)&RcvOK,sizeof(RcvOK));
+	Receive((void *)&RcvOK,sizeof(RcvOK));
+
+	return true;
+}
