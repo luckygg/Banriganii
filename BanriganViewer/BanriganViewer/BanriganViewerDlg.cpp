@@ -287,7 +287,24 @@ void CBanriganViewerDlg::OnBnClickedBtnGetimage()
 	CComboBox* pCB = (CComboBox*)GetDlgItem(IDC_CB_IMAGE);
 	int sel = pCB->GetCurSel();
 
-	ret = m_Banrigan.GetImage(sel, m_pImgBuf);
+	switch (sel)
+	{
+	case 0 : //Camera 1
+	case 1 : //Camera 2
+	case 2 : //Camera 3
+	case 3 : //Camera 4
+		// 0x0001 ~ 0x0004
+		ret = m_Banrigan.GetImage(sel+1, m_pImgBuf);
+		break;
+	case 4 : //Measurement 1
+	case 5 : //Measurement 2
+	case 6 : //Measurement 3
+	case 7 : //Measurement 4
+		// 0x0021 ~ 0x0024
+		ret = m_Banrigan.GetImage(sel+29, m_pImgBuf);
+		break;
+	}
+
 	if (ret == false)
 	{
 		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
@@ -295,7 +312,9 @@ void CBanriganViewerDlg::OnBnClickedBtnGetimage()
 	}
 
 	int state = IsDlgButtonChecked(IDC_CHK_CROSSLINE);
-	CDraw::DrawImage(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,CAMERA_WIDTH,CAMERA_HEIGHT,state);
+	bool bCross;
+	state == 0 ? bCross=false : bCross=true;
+	CDraw::DrawImage(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,CAMERA_WIDTH,CAMERA_HEIGHT,bCross);
 }
 // Create Image Bitmap Info 
 void CBanriganViewerDlg::CreateImgBmpInfo(int nWidth, int nHeight)
@@ -405,7 +424,9 @@ void CBanriganViewerDlg::OnTimer(UINT_PTR nIDEvent)
 		}
 
 		int state = IsDlgButtonChecked(IDC_CHK_CROSSLINE);
-		CDraw::DrawImage(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,CAMERA_WIDTH,CAMERA_HEIGHT,state);
+		bool bCross;
+		state == 0 ? bCross=false : bCross=true;
+		CDraw::DrawImage(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,CAMERA_WIDTH,CAMERA_HEIGHT,bCross);
 	}
 
 	CDialogEx::OnTimer(nIDEvent);
@@ -423,21 +444,33 @@ void CBanriganViewerDlg::OnBnClickedBtnMonitor()
 	}
 
 	CComboBox* pCB = (CComboBox*)GetDlgItem(IDC_CB_RUNMODE);
-	int mode = pCB->GetCurSel();
-	
-	pCB = (CComboBox*)GetDlgItem(IDC_CB_DISPLAY1);
-	int dsp1 = pCB->GetCurSel();
+	int nMode = pCB->GetCurSel(), mode=0;
+	if (nMode == 0)
+		mode = 17 + m_nRbtnMonitor;
+	else
+		mode = 33 + m_nRbtnMonitor;
 
+	pCB = (CComboBox*)GetDlgItem(IDC_CB_DISPLAY1);
+	int nDsp1 = pCB->GetCurSel();
+	if (nDsp1 > 3)
+		nDsp1 += 28;
+	
 	pCB = (CComboBox*)GetDlgItem(IDC_CB_DISPLAY2);
-	int dsp2 = pCB->GetCurSel();
+	int nDsp2 = pCB->GetCurSel();
+	if (nDsp2 > 3)
+		nDsp2 += 28;
 
 	pCB = (CComboBox*)GetDlgItem(IDC_CB_DISPLAY3);
-	int dsp3 = pCB->GetCurSel();
+	int nDsp3 = pCB->GetCurSel();
+	if (nDsp3 > 3)
+		nDsp3 += 28;
 
 	pCB = (CComboBox*)GetDlgItem(IDC_CB_DISPLAY4);
-	int dsp4 = pCB->GetCurSel();
+	int nDsp4 = pCB->GetCurSel();
+	if (nDsp4 > 3)
+		nDsp4 += 28;
 
-	if (m_Banrigan.SetMonitor(m_nRbtnMonitor,mode,dsp1, dsp2, dsp3, dsp4) == false)
+	if (m_Banrigan.SetMonitor(mode,nDsp1,nDsp2,nDsp3,nDsp4) == false)
 		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
 }
 
@@ -515,7 +548,8 @@ void CBanriganViewerDlg::OnBnClickedChkbtnSetpoc()
 	GetDlgItem(IDC_BTN_WRITEREGISTER)->EnableWindow(state);
 	OnUpdateRegister();
 }
-
+// POC 2단계 사용 시 사용하는 방법.
+// Application Flow Result의 설정을 참고하여 코드상에서 결과 값을 접근해야 한다.
 void CBanriganViewerDlg::OnBnClickedBtnMeasure()
 {
 	if (m_Banrigan.IsOpened() == false)
@@ -536,13 +570,12 @@ void CBanriganViewerDlg::OnBnClickedBtnMeasure()
 	SetDlgItemText(IDC_LB_TIME2,L"");
 
 	// 최대 64개의 데이터를 취득한다고 가정.
-	// 0~15까지는 전체 결과물이고, 그 다음부터가 유저가 설정한 결과물이다.
+	// 0~15까지는 전체 결과물이고, 그 다음부터는 유저가 설정한 결과물이다.
 	float result[64] = {0,};
-	int resultSize=0;
 	int group = GetDlgItemInt(IDC_EDIT_GROUP);
 	int flow  = GetDlgItemInt(IDC_EDIT_FLOW);
 
-	if (m_Banrigan.OnExecute(group,flow,result,resultSize) == false)
+	if (m_Banrigan.OnExecute(group,flow,result) == false)
 	{
 		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
 		return;
@@ -553,7 +586,7 @@ void CBanriganViewerDlg::OnBnClickedBtnMeasure()
 	int sel = pCB->GetCurSel();
 
 	memset(m_pImgBuf,0,CAMERA_WIDTH*CAMERA_HEIGHT);
-	if (m_Banrigan.GetImage(sel+4,m_pImgBuf) == false)
+	if (m_Banrigan.GetImage(33+sel,m_pImgBuf) == false)
 	{
 		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
 		return;
@@ -561,13 +594,10 @@ void CBanriganViewerDlg::OnBnClickedBtnMeasure()
 
 	bool ret=false;
 	int state = IsDlgButtonChecked(IDC_CHK_CROSSLINE);
-
-	// POC 1개당 출력되는 데이터를 5개로 설정.
-	// POC 2개일 경우 출력되는 데이터는 10개라고 판단.
-	if (resultSize > 5)
-		CDraw::DrawMeasureImage(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,CAMERA_WIDTH,CAMERA_HEIGHT,result[21],result[22],state); // POC 2단계 결과의 중심 좌표.
-	else
-		CDraw::DrawMeasureImage(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,CAMERA_WIDTH,CAMERA_HEIGHT,result[16],result[17],state); // POC 1단계 결과의 중심 좌표.
+	bool bCross;
+	state == 0 ? bCross=false : bCross=true;
+	
+	CDraw::DrawMeasureImage(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,CAMERA_WIDTH,CAMERA_HEIGHT,result[21],result[22],bCross); // POC 2단계 결과의 중심 좌표.
 
 	CString value=L"";
 	
@@ -582,19 +612,16 @@ void CBanriganViewerDlg::OnBnClickedBtnMeasure()
 	value.Format(L"%.0f", result[20]);	// POC 1 - Processing Time
 	SetDlgItemText(IDC_LB_TIME1,value);
 
-	if (resultSize > 5)
-	{
-		value.Format(L"%.3f", result[21]);	// POC 2 - Measurement Value X
-		SetDlgItemText(IDC_LB_POSX2,value);
-		value.Format(L"%.3f", result[22]);	// POC 2 - Measurement Value Y
-		SetDlgItemText(IDC_LB_POSY2,value);
-		value.Format(L"%.3f", result[23]);	// POC 2 - Measurement Value Theta
-		SetDlgItemText(IDC_LB_THETA2,value);
-		value.Format(L"%.0f", result[24]);	// POC 2 - Accuracy
-		SetDlgItemText(IDC_LB_SCORE2,value);
-		value.Format(L"%.0f", result[25]);	// POC 2 - Processing Time
-		SetDlgItemText(IDC_LB_TIME2,value);
-	}
+	value.Format(L"%.3f", result[21]);	// POC 2 - Measurement Value X
+	SetDlgItemText(IDC_LB_POSX2,value);
+	value.Format(L"%.3f", result[22]);	// POC 2 - Measurement Value Y
+	SetDlgItemText(IDC_LB_POSY2,value);
+	value.Format(L"%.3f", result[23]);	// POC 2 - Measurement Value Theta
+	SetDlgItemText(IDC_LB_THETA2,value);
+	value.Format(L"%.0f", result[24]);	// POC 2 - Accuracy
+	SetDlgItemText(IDC_LB_SCORE2,value);
+	value.Format(L"%.0f", result[25]);	// POC 2 - Processing Time
+	SetDlgItemText(IDC_LB_TIME2,value);
 }
 
 void CBanriganViewerDlg::OnBnClickedBtnWriteRegister()
@@ -691,7 +718,9 @@ void CBanriganViewerDlg::OnUpdateRegister()
 	refPosY = 240 - refPosY;
 	
 	int state = IsDlgButtonChecked(IDC_CHK_CROSSLINE);
-	CDraw::DrawImageWithROI(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,CAMERA_WIDTH,CAMERA_HEIGHT,regOrgX,regOrgY,regSize,refPosX,refPosY,state);
+	bool bCross;
+	state == 0 ? bCross=false : bCross=true;
+	CDraw::DrawImageWithROI(GetDlgItem(IDC_PC_CAMERA),m_pImgBuf,m_pImgBmpInfo,CAMERA_WIDTH,CAMERA_HEIGHT,regOrgX,regOrgY,regSize,refPosX,refPosY,bCross);
 }
 
 void CBanriganViewerDlg::OnBnClickedBtnAlarmreset()

@@ -3,7 +3,7 @@
 //----------------------------------------------------------
 // Programmed by William Kim
 //----------------------------------------------------------
-// Last Update : 2016-11-09 15:07
+// Last Update : 2017-01-18 16:07
 // Modified by William Kim
 //----------------------------------------------------------
 
@@ -29,8 +29,8 @@ private :
 public:
 	//******************************************************************************************************************
 	/// \brief					BANRIGAN에 연결.
-	/// \param [in] strIP		반리간 IP Address.
-	/// \param [in] nPort		반리간 Port Number.
+	/// \param [in] strIP		Banrigan IP Address
+	/// \param [in] nPort		Banrigan Port Number
 	/// \param bool				결과 반환.
 	bool OpenPort(CString strIP, int nPort);
 	//******************************************************************************************************************
@@ -41,89 +41,117 @@ public:
 	/// \brief					BANRIGAN에 연결 확인.
 	/// \param bool				결과 반환.
 	bool IsOpened() { return m_bOpened; }
-
 	//******************************************************************************************************************
 	/// \brief					BANRIGAN에서 발생한 마지막 에러 메시지 확인.
 	/// \param CString			마지막으로 발생한 에러 메시지 반환.
 	CString GetLastErrorMsg() { return m_strLastError; }
-
 	//******************************************************************************************************************
 	/// \brief					BANRIGAN에 데이터 저장.
-	/// \param [in] nType		0:시스템 정보, 1:현재 워크 그룹 번호, 2:모든 사용자 변수 (정수형 + 실수형), 3:사용자 변수 [정수], 4:사용자 변수 [실수], 5:전체 레지스터 데이터. 6:특정 레지스터 데이터
-	/// \param [in] nRegNo		레지스터 번호 (1 ~ 400).
+	/// \param [in] nType		0x0001 : System Information
+	///							0x0010 : Current Work Group Number
+	///							0x0100 : All User Variable (Integer + Real) 
+	///							0x0101 : User Variable [Integer]
+	///							0x0102 : User Variable [Real]
+	///							0x0200 : All Register Data
+	///							0x0201 ~ 0x0390 : Register Data No.1~400
+	/// \param [in] nRegNo		Register Number No.1~400
 	/// \param bool				결과 반환.
 	bool OnSaveData(const int nType, const int nRegNo=0);
 	//******************************************************************************************************************
 	/// \brief					BANRIGAN의 모니터 화면을 설정.
-	/// \param [in] nImage		0:1 Display, 1:2 Display, 2:4 Display.
-	/// \param [in] nMode		0:Run Mode, 1:Setting Mode.
-	/// \param [in] nDisp		0:NONE, 1:CAM1, 2:CAM2, 3:CAM3, 4:CAM4, 5:MEASURE1, 6:MEASURE2, 7:MEASURE3, 8:MEASURE4.
+	/// \param [in] nMode		0x0001 : NONE
+	///							0x0011 : Run Mode 1 Display 
+	///							0x0012 : Run Mode 2 Display
+	///							0x0013 : Run Mode 4 Display
+	///							0x0021 : Setting Mode 1 Display
+	///							0x0022 : Setting Mode 2 Display
+	///							0x0023 : Setting Mode 4 Display
+	/// \param [in] nDisp1~4	0x0000 : None
+	///							0x0001 ~ 0x0004 : Live Image		(Camera 1~4)
+	///							0x0011 ~ 0x0014 : Stop Image		(Camera 1~4)
+	///							0x0021 ~ 0x0024 : Measurement Imgae	(Camera 1~4)
+	///							0x0031 ~ 0x0050 : User Image		(No.1~32)
 	/// \param bool				결과 반환.
-	bool SetMonitor(const int nImage, const int nMode, const int nDisp1, const int nDisp2, const int nDisp3, const int nDisp4);
+	bool SetMonitor(const int nMode, const int nDisp1, const int nDisp2, const int nDisp3, const int nDisp4);
 	//******************************************************************************************************************
 	/// \brief					BANRIGAN의 이미지 획득.
-	/// \param [in]  nImage		0:CAM1, 1:CAM2, 2:CAM3, 3:CAM4, 4:MEASURE1, 5:MEASURE2, 6:MEASURE3, 7:MEASURE4;POC.
+	/// \param [in]  nImage		0x0001 ~ 0x0004 : Live Image		(Camera 1~4)
+	///							0x0011 ~ 0x0014 : Stop Image		(Camera 1~4)
+	///							0x0021 ~ 0x0024 : Measurement Image	(Camera 1~4)
+	///							0x0031 ~ 0x0050 : User Image		(No.1~32)
 	/// \param [out] pBuffer	출력 이미지.
 	/// \param bool				결과 반환.
 	bool GetImage(const int nImage, BYTE* pBuffer);
 	//******************************************************************************************************************
+	/// \brief					BANRIGAN의 이미지 설정.
+	/// \param [in]  nImage		0x0001 ~ 0x0004 : Live Image		(Camera 1~4)
+	///							0x0011 ~ 0x0014 : Stop Image		(Camera 1~4)
+	///							0x0021 ~ 0x0024 : Measurement Image	(Camera 1~4)
+	///							0x0031 ~ 0x0050	: User Image		(No.1~32)
+	/// \param [out] pBuffer	출력 이미지.
+	/// \param bool				결과 반환.
+	bool SetImage(const int nImage, const int nWidth, const int nHeight, BYTE* pBuffer);
+	//******************************************************************************************************************
 	/// \brief					BANRIGAN의 특정 레지스터 데이터 취득.
-	/// \param [in]  nRegNo		레지스터 번호 (1 ~ 400).
-	/// \param [out] nRegOrgX	이미지 시작 위치 X.
-	/// \param [out] nRegOrgY	이미지 시작 위치 Y.
-	/// \param [out] nRegSizeW	이미지 가로 사이즈.
-	/// \param [out] nRegSizeH	이미지 세로 사이즈.
-	/// \param [out] nRefPosX	기준점 좌표 X.
-	/// \param [out] nRefPosY	기준점 좌표 Y.
+	/// \param [in]  nRegNo		Register Number No.1~400
+	/// \param [out] nRegOrgX	Origin Position X
+	/// \param [out] nRegOrgY	Origin Position Y
+	/// \param [out] nRegSizeW	Image Width Size
+	/// \param [out] nRegSizeH	Image Height Size
+	/// \param [out] nRefPosX	Reference Position X
+	/// \param [out] nRefPosY	Reference Position Y
 	/// \param bool				결과 반환.
 	bool GetRegisterData(const int nRegNo, long &nRegOrgX, long &nRegOrgY, int &nRegSizeW, int &nRegSizeH, float &nRefPosX, float &nRefPosY);
 	//******************************************************************************************************************
 	/// \brief					BANRIGAN의 특정 레지스터 이미지 취득.
-	/// \param [in]  nRegNo		레지스터 번호 (1 ~ 400).
+	/// \param [in]  nRegNo		Register Number No.1 ~ 400
 	/// \param [out] pBuffer	이미지 데이터. ※ 출력되는 이미지 크기는 128x128만 가능.
 	/// \param bool				결과 반환.
 	bool GetRegisterImage(const int nRegNo, BYTE* pBuffer);
 	//******************************************************************************************************************
 	/// \brief					BANRIGAN의 특정 레지스터 데이터 적용.
-	/// \param [in] nRegNo		레지스터 번호 (1 ~ 400).
-	/// \param [in] nWidth		레지스터 이미지 가로 사이즈.
-	/// \param [in] nHeight		레지스터 이미지 가로 사이즈.
-	/// \param [in] nRegPosX	이미지 시작 위치 X.
-	/// \param [in] nRegPosY	이미지 시작 위치 Y.
-	/// \param [in] pBuffer		레지스터 이미지.
+	/// \param [in] nRegNo		Register Number No.1~400
+	/// \param [in] nWidth		Image Width Size
+	/// \param [in] nHeight		Image Height Size
+	/// \param [in] nRegPosX	Origin Position X
+	/// \param [in] nRegPosY	Origin Position Y
+	/// \param [in] pBuffer		Image Pointer
 	/// \param bool				결과 반환.
 	bool SetRegisterData(const int nRegNo, const int nWidth, const int nHeight, const int nRegPosX, const int nRegPosY, const BYTE* pBuffer);
 	//******************************************************************************************************************
 	/// \brief					BANRIGAN의 특정 유저 데이터 적용.
-	/// \param [in] nUserNo		유저 데이터 번호 (1 ~ 1024).
-	/// \param [in] nData		유저 데이터 설정 값.
+	/// \param [in] nUserNo		User Data Number No.1~1024
+	/// \param [in] nData		User Data Value
 	/// \param bool				결과 반환.
 	bool SetUserData(const int nUserNo, int nData);
 	//******************************************************************************************************************
 	/// \brief					BANRIGAN의 특정 레지스터 데이터 제거.
-	/// \param [in] nRegNo		레지스터 번호 (1 ~ 400).
+	/// \param [in] nRegNo		Register Number No.1~400
 	/// \param bool				결과 반환.
 	bool OnDeleteRegisterData(const int nRegNo);
 	//******************************************************************************************************************
 	/// \brief					BANRIGAN의 특정 레지스터 데이터 추가.
-	/// \param [in] nRegNo		레지스터 번호 (1 ~ 400).
-	/// \param [in] nImage		1:CAM1, 2:CAM2, 3:CAM3, 4:CAM4.
-	/// \param [in] nRegOrgX	이미지 데이터 시작 위치 X 방향.
-	/// \param [in] nRegOrgY	이미지 데이터 시작 위치 Y 방향.
-	/// \param [in] nRegWidth	이미지 데이터 가로 사이즈.
-	/// \param [in] nRegHeight	이미지 데이터 세로 사이즈.
-	/// \param [in] nRefPosX	매칭 화상 기준점 X 좌표.
-	/// \param [in] nRefPosY	매칭 화상 기준점 Y 좌표.
+	/// \param [in] nRegNo		Register Number No.1~400
+	/// \param [in] nImage		0x0001 ~ 0x0004 : Live Image		(Camera 1~4)
+	///							0x0021 ~ 0x0024 : Measurement Image	(Camera 1~4)
+	///							0x0031 ~ 0x0050 : User Image		(No.1~32)
+	/// \param [in] nRegOrgX	Origin Position X
+	/// \param [in] nRegOrgY	Origin Position Y
+	/// \param [in] nRegWidth	Image Width Size
+	/// \param [in] nRegHeight	Image Height Size
+	/// \param [in] nRefPosX	Reference Position X
+	/// \param [in] nRefPosY	Reference Position Y
 	/// \param bool				결과 반환.
 	bool OnAddRegisterData(const int nRegNo, const int nImage, const int nRegOrgX, const int nRegOrgY, const int nRegSize, int nRefPosX, int nRefPosY);
 	//******************************************************************************************************************
 	/// \brief					 BANRIGAN의 Application Flow를 처음부터 실행.
-	/// \param [in]  nGroup		 0:현재 워크 그룹 번호, 1~16 워크 그룹 번호 설정
-	/// \param [in]  nFlow		 0:현재 흐름 번호, 1~64 흐름 번호 설정
-	/// \param [Out] pResult	 결과 값이 반환될 포인터.
-	/// \param [in]  nResultSize 결과 값이 반환될 포인터의 사이즈(공통 결과 수 16개 + 유저 결과 수).
+	/// \param [in]  nGroup		 0 : Current Work Group Number
+	///							 Work Group Number No.1~16
+	/// \param [in]  nFlow		 0 : Current Application Flow Number
+	///							 Application Flow Number No.1~64
+	/// \param [Out] pResult	 Result Data Pointer
 	/// \param bool				 결과 반환.
-	bool OnExecute(const int nGroup, const int nFlow, float* pResult, int &nResultSize);
+	bool OnExecute(const int nGroup, const int nFlow, float* pResult);
 	//******************************************************************************************************************
 	/// \brief					 BANRIGAN의 각종 리셋을 실행.
 	/// \param [in]  nType		 0:실행 상태, 1:Flow 실행 결과, 2:User변수[현재값], 3:화상 데이터, 4:로그 데이터, 5:알람 리셋, 6:소프트웨어 리셋, 7:하드웨어 리셋

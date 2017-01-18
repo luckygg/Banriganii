@@ -5,6 +5,7 @@
 #define	CMD_MONITOR		0x0105
 #define CMD_SET_USR		0x0131
 #define	CMD_GET_IMG		0x0132
+#define CMD_SET_IMG		0x0133
 #define	CMD_GET_REG		0x0135
 #define	CMD_SET_REG		0x0136
 #define CMD_ADD_REG		0x0137
@@ -63,6 +64,26 @@ struct StRcvGetImage
 	unsigned long	SizeW;
 	unsigned long	SizeH;
 	double			Reserve2;
+};
+
+//----- Set Image Command -----//
+struct StSndSetImage
+{
+	StCommonCmd		Cmd;
+	unsigned long	SubCode;
+	unsigned long	Image;
+	unsigned long	Reserve1;
+	unsigned long	Format;
+	double			Reserve2;
+	unsigned long	SizeW;
+	unsigned long	SizeH;
+	double			Reserve3;
+};
+
+struct StRcvSetImage
+{
+	unsigned long	SubCode;
+	unsigned long	Image;
 };
 
 //----- Set Register Data Command -----//

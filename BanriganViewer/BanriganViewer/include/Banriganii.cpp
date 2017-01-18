@@ -123,17 +123,7 @@ bool CBanrigan::OnSaveData(const int nType, const int nRegNo)
 	SndCmd.Cmd.MainCode = CMD_SAVE; 
 	SndCmd.Cmd.MsgID	= 0x0000;
 	SndCmd.SubCode		= 0x0000;
-
-	switch (nType)
-	{
-	case 0 : SndCmd.Type = 0x0001; break;	// System Information
-	case 1 : SndCmd.Type = 0x0010; break;	// Current Work Group
-	case 2 : SndCmd.Type = 0x0100; break;	// All User Variable (integer + real)
-	case 3 : SndCmd.Type = 0x0101; break;	// User Variable [integer]
-	case 4 : SndCmd.Type = 0x0102; break;	// User Variable [real]
-	case 5 : SndCmd.Type = 0x0200; break;	// All Register Data
-	case 6 : SndCmd.Type = 0x0200 + nRegNo; break; // Selected Register Data (1~400)
-	}
+	SndCmd.Type			 = nType;
 
 	Send((void *)&SndCmd,sizeof(SndCmd));
 	Receive((void *)&RcvCmd,sizeof(RcvCmd));
@@ -155,7 +145,7 @@ bool CBanrigan::OnSaveData(const int nType, const int nRegNo)
 	return true;
 }
 
-bool CBanrigan::SetMonitor(const int nImage, const int nMode, const int nDisp1=0, const int nDisp2=0, const int nDisp3=0, const int nDisp4=0)
+bool CBanrigan::SetMonitor(const int nMode, const int nDisp1=0, const int nDisp2=0, const int nDisp3=0, const int nDisp4=0)
 {
 	StSndSetMonitor SndCmd;
 	StCommonCmd		RcvCmd;
@@ -166,39 +156,11 @@ bool CBanrigan::SetMonitor(const int nImage, const int nMode, const int nDisp1=0
 	SndCmd.Cmd.MainCode = CMD_MONITOR; 
 	SndCmd.Cmd.MsgID	= 0x0000;
 	SndCmd.SubCode		= 0x0000;
-
-	if (nMode == 0)			// Run Mode
-		SndCmd.Type = 0x0011 + nImage;
-	else if (nMode == 1)	// Setting Mode
-		SndCmd.Type = 0x0021 + nImage;
-
-	// 0001h 표시 없음 
-	// 0002h 운전 화면 (응용 프로그램 흐름 정보 설정) 
-	// 0011h 운전 화면 : 1 화상 표시 (disp1 표시 이미지를 선택) 
-	// 0012h 운전 화면 : 2 이미지 표시 (disp1 / disp2 표시 이미지 선택) 
-	// 0013h 운전 화면 : 4 이미지 표시 (disp1 / disp2 / disp3 / disp4 표시 이미지 선택) 
-	// 0021h 설정 화면 : 1 화상 표시 (disp1 표시 이미지를 선택) 
-	// 0022h 설정 화면 : 2 이미지 표시 (disp1 / disp2 표시 이미지 선택) 
-	// 0023h 설정 화면 : 4 이미지 표시 (disp1 / disp2 / disp3 / disp4 표시 이미지 선택)
-
-	SndCmd.Disp1 = nDisp1;
-	SndCmd.Disp2 = nDisp2;
-	SndCmd.Disp3 = nDisp3;
-	SndCmd.Disp4 = nDisp4;
-
-	if (nDisp1 > 4)
-		SndCmd.Disp1 = 0x0016 + nDisp1;
-	if (nDisp2 > 4)
-		SndCmd.Disp2 = 0x0016 + nDisp2;
-	if (nDisp3 > 4)
-		SndCmd.Disp3 = 0x0016 + nDisp3;
-	if (nDisp4 > 4)
-		SndCmd.Disp4 = 0x0016 + nDisp4;
-
-	// 0001h ~ 0004h 라이브 이미지 (카메라 1 ~ 4)
-	// 0011h ~ 0014h 정지 이미지 (카메라 1 ~ 4)
-	// 0021h ~ 0024h 측정 이미지 (카메라 1 ~ 4)
-	// 0031h ~ 0050h 사용자 이미지 (1 ~ 32)
+	SndCmd.Type			= nMode;
+	SndCmd.Disp1		= nDisp1;
+	SndCmd.Disp2		= nDisp2;
+	SndCmd.Disp3		= nDisp3;
+	SndCmd.Disp4		= nDisp4;
 
 	int nSend = sizeof(SndCmd);
 	int nRcv  = sizeof(RcvCmd);
@@ -233,20 +195,11 @@ bool CBanrigan::GetImage(const int nImage, BYTE* pBuffer)
 	SndCmd.Cmd.MainCode = CMD_GET_IMG; 
 	SndCmd.Cmd.MsgID	= 0x0000;
 	SndCmd.SubCode		= 0x0000;
-
-	SndCmd.Image = nImage+1;
-	// 0001h ~ 0004h 라이브 이미지 (카메라 1 ~ 4)
-	// 0011h ~ 0014h 정지 이미지 (카메라 1 ~ 4)
-	// 0021h ~ 0024h 측정 이미지 (카메라 1 ~ 4)
-	// 0031h ~ 0050h 사용자 이미지 (1 ~ 32)
-
-	if (nImage > 3)
-		SndCmd.Image = 0x001D + nImage;
+	SndCmd.Image		= nImage;
 
 	Send((void *)&SndCmd,sizeof(SndCmd));
 
 	Receive((void *)&RcvCmd,sizeof(RcvCmd));
-
 	if(RcvCmd.MainCode != 0x8132)
 	{
 		StCommonNG RcvNG;
@@ -277,6 +230,58 @@ bool CBanrigan::GetImage(const int nImage, BYTE* pBuffer)
 
 	delete []buffer;
 	buffer = NULL;
+
+	return true;
+}
+
+bool CBanrigan::SetImage(const int nImage, const int nWidth, const int nHeight, BYTE* pBuffer)
+{
+	StSndSetImage SndCmd;
+	StCommonCmd	  RcvCmd;
+	ZeroMemory((void *)&SndCmd,sizeof(SndCmd));
+	ZeroMemory((void *)&RcvCmd,sizeof(RcvCmd));
+
+	SndCmd.Cmd.MsgSize	= 0x0030 + (nWidth*nHeight);   
+	SndCmd.Cmd.MainCode = CMD_SET_IMG; 
+	SndCmd.Cmd.MsgID	= 0x0000;
+	SndCmd.SubCode		= 0x0000;
+	SndCmd.Image		= nImage;
+	SndCmd.Format		= 1;		//1:Monochrome 8bit
+	SndCmd.SizeW		= nWidth;
+	SndCmd.SizeH		= nHeight;
+
+	Send((void *)&SndCmd,sizeof(SndCmd));
+
+	int len = nWidth*nHeight;
+	BYTE *buffer = new BYTE[len];
+	memset(buffer,0,len);
+
+	memcpy(buffer, pBuffer, len);
+	int sum=0;
+	for(int i = 0; i < len;)
+	{
+		sum = Send((void *)(buffer + i),len - i);
+		i += sum;
+	}
+
+	delete []buffer;
+	buffer = NULL;
+
+	Receive((void *)&RcvCmd,sizeof(RcvCmd));
+
+	if(RcvCmd.MainCode != 0x8133)
+	{
+		StCommonNG RcvNG;
+		ZeroMemory((void *)&RcvNG,sizeof(RcvNG));
+		Receive((void *)&RcvNG,sizeof(RcvNG));
+
+		m_strLastError = GetErrorMessage(RcvCmd, RcvNG);
+		return false;
+	}
+
+	StRcvSetImage RcvOK;
+	ZeroMemory((void *)&RcvOK,sizeof(RcvOK));
+	Receive((void *)&RcvOK,sizeof(RcvOK));
 
 	return true;
 }
@@ -475,9 +480,6 @@ bool CBanrigan::OnAddRegisterData(const int nRegNo, const int nImage, const int 
 	ZeroMemory((void *)&SndCmd,sizeof(SndCmd));
 	ZeroMemory((void *)&RcvCmd,sizeof(RcvCmd));
 
-	int img = nImage+1;
-	if (nImage > 3)
-		img = 0x001D + nImage;
 
 	SndCmd.Cmd.MsgSize	= 0x0060;   
 	SndCmd.Cmd.MainCode = CMD_ADD_REG; 
@@ -488,7 +490,7 @@ bool CBanrigan::OnAddRegisterData(const int nRegNo, const int nImage, const int 
 	SndCmd.System		= 0x0000;
 	SndCmd.Reserve1		= 0x0000;
 	SndCmd.Match		= 0x0001;
-	SndCmd.Image		= img;
+	SndCmd.Image		= nImage;
 	SndCmd.RegPosX		= nRegOrgX;
 	SndCmd.RegPosY		= nRegOrgY;
 	SndCmd.RegSizeW		= nRegSize;
@@ -524,7 +526,7 @@ bool CBanrigan::OnAddRegisterData(const int nRegNo, const int nImage, const int 
 	return true;
 }
 
-bool CBanrigan::OnExecute(const int nGroup, const int nFlow, float* pResult, int &nResultSize)
+bool CBanrigan::OnExecute(const int nGroup, const int nFlow, float* pResult)
 {
 	StSndExecute SndCmd;
 	StCommonCmd  RcvCmd;
@@ -560,9 +562,6 @@ bool CBanrigan::OnExecute(const int nGroup, const int nFlow, float* pResult, int
 	// 응답 정상 시 msg-size = 0x18h + Flow 종합 결과 크기
 	// 또한, 공통 결과수가 16개 기본이므로 유저가 설정한 결과 개수는 아래와 같이 계산한다.
 	int size = (RcvCmd.MsgSize-0x18)/4 - 16;
-	nResultSize = size;
-	int data[16]={0,};
-	//Receive((void *)data, sizeof(int)*(16));
 	Receive((void *)pResult, sizeof(float)*(size+16));
 
 	return true;
