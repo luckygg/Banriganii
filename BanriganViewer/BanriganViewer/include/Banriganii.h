@@ -154,7 +154,14 @@ public:
 	bool OnExecute(const int nGroup, const int nFlow, float* pResult);
 	//******************************************************************************************************************
 	/// \brief					 BANRIGAN의 각종 리셋을 실행.
-	/// \param [in]  nType		 0:실행 상태, 1:Flow 실행 결과, 2:User변수[현재값], 3:화상 데이터, 4:로그 데이터, 5:알람 리셋, 6:소프트웨어 리셋, 7:하드웨어 리셋
+	/// \param [in]  nType		 0x0000 : Execution Status Clear
+	///							 0x0001 : Flow Result Clear
+	///							 0x0002 : User Variable [Current Value] Clear
+	///							 0x0003 : Image Data Clear
+	///							 0x0004 : Log Data Clear
+	///							 0x0100 : Alarm Reset
+	///							 0x0200 : Software Reset
+	///							 0x8000 : Hardware Reset (Default value)
 	/// \param bool				 결과 반환.
 	bool OnReset(const int nType);
 

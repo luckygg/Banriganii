@@ -110,9 +110,6 @@ void CBanriganViewerDlg::InitControls()
 	pCB = (CComboBox*)GetDlgItem(IDC_CB_MEASURE);
 	pCB->SetCurSel(0);
 
-	pCB = (CComboBox*)GetDlgItem(IDC_CB_RESET);
-	pCB->SetCurSel(5);
-
 	// ----- Edit & Spin Control ----- //
 	UDACCEL accels[] = {{-1,1}};
 	CSpinButtonCtrl* pSP = (CSpinButtonCtrl*)GetDlgItem(IDC_SPIN_REGORGX);
@@ -731,9 +728,7 @@ void CBanriganViewerDlg::OnBnClickedBtnAlarmreset()
 		return;
 	}
 
-	CComboBox* pCB = (CComboBox*)GetDlgItem(IDC_CB_RESET);
-	int sel = pCB->GetCurSel();
-	if (m_Banrigan.OnReset(sel) == false)
+	if (m_Banrigan.OnReset(0x0100) == false)
 	{
 		AfxMessageBox(m_Banrigan.GetLastErrorMsg());
 		return;

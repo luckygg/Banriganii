@@ -638,27 +638,8 @@ bool CBanrigan::OnReset(const int nType)
 	SndCmd.Cmd.MainCode = CMD_RESET; 
 	SndCmd.Cmd.MsgID	= 0x0000;
 	SndCmd.SubCode		= 0x0000;
+	SndCmd.Type			= nType;
 	
-	switch (nType)
-	{
-	case 0:
-	case 1:
-	case 2:
-	case 3:
-	case 4:
-		SndCmd.Type	= nType;
-		break;
-	case 5:
-		SndCmd.Type	= 0x0100;
-		break;
-	case 6:
-		SndCmd.Type	= 0x0200;
-		break;
-	case 7:
-		SndCmd.Type	= 0x8000;
-		break;
-	}
-
 	Send((void *)&SndCmd,sizeof(SndCmd));
 
 	Receive((void *)&RcvCmd,sizeof(RcvCmd));
